@@ -62,7 +62,13 @@ function generatePlans() {
   const input = getInputs();
 const engineResults = getBestPatterns(input);
 console.log(engineResults);
-alert(`Engine found ${engineResults.patterns.length} patterns. Top pattern uses ${engineResults.patterns[0].count} dispensers.`);
+
+currentInput = input;
+currentPlans = engineResults.patterns;
+
+renderSummary(input, engineResults.orchard.trees.length);
+renderOptions(currentPlans, input);
+showOptionsScreen();
 return;
   const squareFeetPerAcre = 43560;
   const blockSqFt = input.acres * squareFeetPerAcre;
