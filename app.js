@@ -61,9 +61,12 @@ const totalTrees = input.rows * input.treesPerRow;
         if (count === 0) continue;
 
         const rateActual = count / input.acres;
-        const rateDiff = Math.abs(count - targetDispensers);
+const rateDiff = Math.abs(count - targetDispensers);
+const percentDiff = rateDiff / targetDispensers;
 
-        candidates.push({
+if (percentDiff > 0.10) continue;
+
+candidates.push({
           rowInterval,
           treeInterval,
           offset,
@@ -71,7 +74,8 @@ const totalTrees = input.rows * input.treesPerRow;
           count,
           rateActual,
           rateDiff,
-          spacingScore: scoreSpacing(rowInterval, treeInterval, offset),
+percentDiff,
+spacingScore: scoreSpacing(rowInterval, treeInterval, offset),
           simplicityScore: scoreSimplicity(rowInterval, treeInterval, offset),
           laborScore: scoreLabor(rowInterval, input.crewSize)
         });
@@ -79,26 +83,32 @@ const totalTrees = input.rows * input.treesPerRow;
     }
   }
 
-  const bestSpacing = pickBest(candidates, "spacing");
-  const easiestDeployment = pickBest(candidates, "easy");
-  const closestRate = pickBest(candidates, "rate");
+  if (candidates.length === 0) {
+  alert("No repeatable pattern was found within 10% of the target rate. Try adjusting acres, rows, spacing, or rate.");
+  return;
+}
+
+const closestRate = pickBest(candidates, "rate");
+const bestSpacing = pickBest(candidates, "spacing");
+const easiestDeployment = pickBest(candidates, "easy");
 
   const plans = removeDuplicatePlans([
-    {
-      label: "Best Staggered Spacing",
-      note: "Best for even coverage across the block.",
-      ...bestSpacing
-    },
-    {
-      label: "Easiest Deployment",
-      note: "Best for simple crew instructions.",
-      ...easiestDeployment
-    },
-    {
-      label: "Closest to Target Rate",
-      note: "Best for matching the desired dispensers per acre.",
-      ...closestRate
-    }
+  {
+    label: "Closest to Target Rate",
+    note: "Best for staying close to the desired dispensers per acre.",
+    ...closestRate
+  },
+  {
+    label: "Best Staggered Spacing",
+    note: "Best for even coverage across the block.",
+    ...bestSpacing
+  },
+  {
+    label: "Easiest Deployment",
+    note: "Best for simple crew instructions.",
+    ...easiestDeployment
+  }
+]);
   ]);
 
   renderSummary(input, targetDispensers, totalTrees);
@@ -180,17 +190,28 @@ function scoreLabor(rowInterval, crewSize) {
 function pickBest(candidates, type) {
   return [...candidates].sort((a, b) => {
     if (type === "rate") {
-      return a.rateDiff - b.rateDiff || b.spacingScore - a.spacingScore;
+      return (
+        a.rateDiff - b.rateDiff ||
+        b.spacingScore - a.spacingScore ||
+        b.simplicityScore - a.simplicityScore
+      );
     }
 
     if (type === "easy") {
-      return b.simplicityScore - a.simplicityScore || a.rateDiff - b.rateDiff;
+      return (
+        a.rateDiff - b.rateDiff ||
+        b.simplicityScore - a.simplicityScore ||
+        b.laborScore - a.laborScore
+      );
     }
 
-    return b.spacingScore - a.spacingScore || a.rateDiff - b.rateDiff;
+    return (
+      a.rateDiff - b.rateDiff ||
+      b.spacingScore - a.spacingScore ||
+      b.simplicityScore - a.simplicityScore
+    );
   })[0];
 }
-
 function removeDuplicatePlans(plans) {
   const seen = new Set();
 
