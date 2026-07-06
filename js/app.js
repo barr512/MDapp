@@ -21,10 +21,20 @@ treeSpacing: Number(document.getElementById("treeSpacing").value),
 }
 
 function generatePlans() {
-  const input = getInputs();
+ const input = getInputs();
 
-  const targetDispensers = Math.round(input.acres * input.rate);
-  const totalTrees = input.rows * input.treesPerRow;
+const squareFeetPerAcre = 43560;
+const blockSqFt = input.acres * squareFeetPerAcre;
+const blockWidth = input.rows * input.rowSpacing;
+
+input.estimatedRowLength = blockSqFt / blockWidth;
+input.treesPerRow = Math.max(
+  1,
+  Math.round(input.estimatedRowLength / input.treeSpacing)
+);
+
+const targetDispensers = Math.round(input.acres * input.rate);
+const totalTrees = input.rows * input.treesPerRow;
 
   const candidates = [];
 
