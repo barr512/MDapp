@@ -5,9 +5,14 @@ const mapSection = document.getElementById("mapSection");
 const mapEl = document.getElementById("map");
 const instructionsEl = document.getElementById("instructions");
 const selectedPlanText = document.getElementById("selectedPlanText");
-
+const setupScreen = document.getElementById("setupScreen");
+const resultsScreen = document.getElementById("resultsScreen");
+const backBtn = document.getElementById("backBtn");
 generateBtn.addEventListener("click", generatePlans);
-
+backBtn.addEventListener("click", () => {
+  resultsScreen.classList.add("hidden");
+  setupScreen.classList.remove("hidden");
+});
 function getInputs() {
   return {
     blockName: document.getElementById("blockName").value || "Unnamed Block",
@@ -111,9 +116,12 @@ const easiestDeployment = pickBest(candidates, "easy");
 ]);
   ]);
 
-  renderSummary(input, targetDispensers, totalTrees);
-  renderOptions(plans, input, targetDispensers);
-  selectPlan(plans[0], input, targetDispensers);
+  setupScreen.classList.add("hidden");
+resultsScreen.classList.remove("hidden");
+
+renderSummary(input, targetDispensers, totalTrees);
+renderOptions(plans, input, targetDispensers);
+selectPlan(plans[0], input, targetDispensers);
 }
 function buildLayout(rows, treesPerRow, rowInterval, treeInterval, offset) {
   const layout = [];
