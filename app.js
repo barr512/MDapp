@@ -139,14 +139,36 @@ function getBestPatterns(input) {
     }
   }
 
-  const patterns = candidatePatterns
-    .sort((a, b) => a.score - b.score)
-    .slice(0, 3);
+    const uniquePatterns = [];
+  const seen = new Set();
+
+  candidatePatterns
+    .sort((a, b) => {
+      const aStaggered = a.offset > 0;
+      const bStaggered = b.offset > 0;
+
+      if (aStaggered !== bStaggered) {
+        return aStaggered ? -1 : 1;
+      }
+
+      return a.score - b.score;
+    })
+    .forEach(pattern => {
+      const key = `${pattern.rowInterval}-${pattern.treeInterval}-${pattern.offset}`;
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniquePatterns.push(pattern);
+      }
+    });
+
+  const patterns = uniquePatterns.slice(0, 3);
 
   return {
     orchard,
     patterns
   };
+}
 }
 function generatePlans() {
   const input = getInputs();
