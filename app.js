@@ -311,6 +311,11 @@ function renderOptions(plans) {
           <strong>${plan.betweenTreesFeet.toFixed(0)}</strong>
           <span class="muted">ft apart</span>
         </div>
+                <div class="stat">
+          <span class="muted">Coverage Difference</span>
+          <strong>${((Math.abs(plan.actualAreaPerDispenser - currentInput.targetAreaPerDispenser) / currentInput.targetAreaPerDispenser) * 100).toFixed(1)}%</strong>
+          <span class="muted">from target</span>
+        </div>
       </div>
 
       <p class="muted">Tap to view schematic.</p>
@@ -346,7 +351,13 @@ function selectPlan(plan, input) {
   mapSection.classList.remove("hidden");
   instructionsEl.classList.remove("hidden");
 
-  selectedPlanText.textContent = describePattern(plan);
+  selectedPlanText.innerHTML = `
+  <button class="secondary-button" onclick="showOptionsScreen()">
+    Back to Plan Options
+  </button>
+  <br><br>
+  ${describePattern(plan)}
+`;
 
   renderMap(plan.layout);
   renderInstructions(plan, input);
