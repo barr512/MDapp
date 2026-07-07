@@ -191,7 +191,7 @@ function generatePlans() {
     convertEnginePatternToUiPlan(pattern, engineResults.orchard, input)
   );
 
-  assignPatternBadges(currentPlans);
+  
 
   renderSummary(input, engineResults.orchard.trees.length);
   renderOptions(currentPlans);
@@ -308,7 +308,7 @@ function renderSummary(input, totalTrees) {
 function renderOptions(plans) {
   optionsEl.innerHTML = "";
 
-  plans.forEach(plan => {
+  plans.forEach((plan, index) => {
     const card = document.createElement("section");
     card.className = "option-card";
 
@@ -374,7 +374,7 @@ function selectPlan(plan, input) {
       Back to Pattern Options
     </button>
     <br><br>
-    <strong>${plan.label}</strong><br>
+   <strong>Pattern Details</strong><br>
     ${describePattern(plan)}
   `;
 
