@@ -169,7 +169,7 @@ function getBestPatterns(input) {
     patterns
   };
 }
-}
+
 function generatePlans() {
   const input = getInputs();
 
