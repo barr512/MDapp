@@ -312,41 +312,31 @@ function renderOptions(plans) {
     const card = document.createElement("section");
     card.className = "option-card";
 
-    card.innerHTML = `
-      <span class="badge">${plan.label}</span>
-      <h3>${describePattern(plan)}</h3>
-      <p class="muted">${getPlanNote(plan)}</p>
+   card.innerHTML = `
+  <span class="badge">Pattern ${index + 1}</span>
 
-      <div class="stats">
+  <div class="stats compact-stats">
+    <div class="stat">
+      <span class="muted">Coverage Fit</span>
+      <strong>${(100 - plan.percentCoverageDifference * 100).toFixed(1)}%</strong>
+      <span class="muted">of target</span>
+    </div>
 
-  <div class="stat">
-    <span class="muted">Rate</span>
-    <strong>${plan.actualRate.toFixed(1)}</strong>
-    <span class="muted">dispensers/acre</span>
+    <div class="stat">
+      <span class="muted">Rate</span>
+      <strong>${Math.round(plan.actualRate)}</strong>
+      <span class="muted">per acre</span>
+    </div>
+
+    <div class="stat">
+      <span class="muted">Total</span>
+      <strong>${plan.count}</strong>
+      <span class="muted">dispensers</span>
+    </div>
   </div>
 
-  <div class="stat">
-    <span class="muted">Coverage Fit</span>
-    <strong>${(100 - plan.percentCoverageDifference * 100).toFixed(1)}%</strong>
-    <span class="muted">of target</span>
-  </div>
-
-  <div class="stat">
-    <span class="muted">Pattern</span>
-    <strong>${plan.rowInterval === 1 ? "Every row" : "Every " + ordinal(plan.rowInterval) + " row"}</strong>
-    <span class="muted">${plan.treeInterval === 1 ? "Every tree" : "Every " + ordinal(plan.treeInterval) + " tree"}</span>
-  </div>
-
-  <div class="stat">
-    <span class="muted">Stagger</span>
-    <strong>${plan.offset > 0 ? "Yes" : "No"}</strong>
-    <span class="muted">alternating rows</span>
-  </div>
-
-</div>
-
-      <p class="muted">Select this pattern to view the schematic.</p>
-    `;
+  <p class="muted">Tap to view pattern details.</p>
+`;
 
     card.addEventListener("click", () => {
       showPlanScreen(plan);
