@@ -318,36 +318,32 @@ function renderOptions(plans) {
       <p class="muted">${getPlanNote(plan)}</p>
 
       <div class="stats">
-        <div class="stat">
-          <span class="muted">Pattern Uses</span>
-          <strong>${plan.count}</strong>
-          <span class="muted">dispensers</span>
-        </div>
 
-        <div class="stat">
-          <span class="muted">Resulting Rate</span>
-          <strong>${Math.round(plan.actualRate)}</strong>
-          <span class="muted">per acre</span>
-        </div>
+  <div class="stat">
+    <span class="muted">Rate</span>
+    <strong>${plan.actualRate.toFixed(1)}</strong>
+    <span class="muted">dispensers/acre</span>
+  </div>
 
-        <div class="stat">
-          <span class="muted">Coverage Difference</span>
-          <strong>${(plan.percentCoverageDifference * 100).toFixed(1)}%</strong>
-          <span class="muted">from target</span>
-        </div>
+  <div class="stat">
+    <span class="muted">Coverage Fit</span>
+    <strong>${(100 - plan.percentCoverageDifference * 100).toFixed(1)}%</strong>
+    <span class="muted">of target</span>
+  </div>
 
-        <div class="stat">
-          <span class="muted">Dispenser Rows</span>
-          <strong>${plan.betweenRowsFeet.toFixed(0)}</strong>
-          <span class="muted">ft apart</span>
-        </div>
+  <div class="stat">
+    <span class="muted">Pattern</span>
+    <strong>${plan.rowInterval === 1 ? "Every row" : "Every " + ordinal(plan.rowInterval) + " row"}</strong>
+    <span class="muted">${plan.treeInterval === 1 ? "Every tree" : "Every " + ordinal(plan.treeInterval) + " tree"}</span>
+  </div>
 
-        <div class="stat">
-          <span class="muted">In-Row Spacing</span>
-          <strong>${plan.betweenTreesFeet.toFixed(0)}</strong>
-          <span class="muted">ft apart</span>
-        </div>
-      </div>
+  <div class="stat">
+    <span class="muted">Stagger</span>
+    <strong>${plan.offset > 0 ? "Yes" : "No"}</strong>
+    <span class="muted">alternating rows</span>
+  </div>
+
+</div>
 
       <p class="muted">Select this pattern to view the schematic.</p>
     `;
