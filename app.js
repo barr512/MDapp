@@ -55,6 +55,99 @@ function showPlanScreen(plan) {
 
   selectPlan(plan, currentInput);
 }
+function getBestPatterns(input) {
+  const SQFT_PER_ACRE = 43560;
+
+  const blockArea = input.acres * SQFT_PER_ACRE;
+  const totalRowFeet = blockArea / input.rowSpacing;
+  const rowLength = totalRowFeet / input.rows;
+  const treesPerRow = Math.round(rowLength / input.treeSpacing);
+
+  const orchard = {
+    rows: input.rows,
+    rowLength,
+    treesPerRow,
+    trees: []
+  };
+
+  for (let row = 1; row <= input.rows; row++) {
+    for (let tree = 1; tree <= treesPerRow; tree++) {
+      orchard.trees.push({ row, tree });
+    }
+  }
+
+  const targetDispensers = Math.round(input.acres * input.targetRate);
+
+  const candidatePatterns = [];
+
+  for (let rowInterval = 1; rowInterval <= Math.min(10, input.rows); rowInterval++) {
+    for (let treeInterval = 1; treeInterval <= Math.min(40, treesPerRow); treeInterval++) {
+      for (let offset of [0, Math.floor(treeInterval / 2)]) {
+        const placements = [];
+
+        for (let row = 1; row <= input.rows; row++) {
+          if ((row - 1) % rowInterval !== 0) continue;
+
+          const rowOffset = row % 2 === 0 ? offset : 0;
+
+          for (let idealTree = 1 + rowOffset; idealTree <= treesPerRow; idealTree += treeInterval) {
+            const closestTree = Math.max(
+              1,
+              Math.min(treesPerRow, Math.round(idealTree))
+            );
+
+            placements.push({
+              row,
+              tree: closestTree
+            });
+          }
+        }
+
+        const count = placements.length;
+        const resultingRate = count / input.acres;
+        const rateDifference = Math.abs(count - targetDispensers);
+
+        const areaPerDispenser =
+          rowInterval *
+          input.rowSpacing *
+          treeInterval *
+          input.treeSpacing;
+
+        const targetAreaPerDispenser = SQFT_PER_ACRE / input.targetRate;
+
+        const areaDifference = Math.abs(
+          areaPerDispenser - targetAreaPerDispenser
+        );
+
+        const score =
+          rateDifference * 1000 +
+          areaDifference +
+          rowInterval * 5 +
+          treeInterval;
+
+        candidatePatterns.push({
+          rowInterval,
+          treeInterval,
+          offset,
+          placements,
+          count,
+          targetDispensers,
+          resultingRate,
+          score
+        });
+      }
+    }
+  }
+
+  const patterns = candidatePatterns
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 3);
+
+  return {
+    orchard,
+    patterns
+  };
+}
 function generatePlans() {
   const input = getInputs();
 
