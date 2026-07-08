@@ -140,18 +140,6 @@ let treeEnd = treesPerRow;
 let treeStep = treeInterval;
 
 if (rowsRunNorthSouth) {
-  if (input.pressureEdge === "south") {
-    rowStart = input.rows;
-    rowEnd = 1;
-    rowStep = -1;
-  }
-
-  if (input.pressureEdge === "west") {
-    treeStart = treesPerRow;
-    treeEnd = 1;
-    treeStep = -treeInterval;
-  }
-} else {
   if (input.pressureEdge === "east") {
     rowStart = input.rows;
     rowEnd = 1;
@@ -159,6 +147,18 @@ if (rowsRunNorthSouth) {
   }
 
   if (input.pressureEdge === "south") {
+    treeStart = treesPerRow;
+    treeEnd = 1;
+    treeStep = -treeInterval;
+  }
+} else {
+  if (input.pressureEdge === "south") {
+    rowStart = input.rows;
+    rowEnd = 1;
+    rowStep = -1;
+  }
+
+  if (input.pressureEdge === "east") {
     treeStart = treesPerRow;
     treeEnd = 1;
     treeStep = -treeInterval;
