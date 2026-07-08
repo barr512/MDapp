@@ -272,8 +272,8 @@ coverageScore: coverageQuality.coverageScore,
     }
 
     // 2. Then closest dispenser rate/count
-    const rateDifferenceA = Math.abs(a.ratePerAcre - targetRate);
-    const rateDifferenceB = Math.abs(b.ratePerAcre - targetRate);
+    const rateDifferenceA = Math.abs(a.resultingRate - input.targetRate);
+    const rateDifferenceB = Math.abs(b.resultingRate - input.targetRate);
 
     if (rateDifferenceA !== rateDifferenceB) {
       return rateDifferenceA - rateDifferenceB;
@@ -286,8 +286,8 @@ coverageScore: coverageQuality.coverageScore,
 
     // 4. Final tie-breaker: overall score
     return a.score - b.score;
-  });
-    .forEach(pattern => {
+  })
+  .forEach(pattern => {
       const key = `${pattern.rowInterval}-${pattern.treeInterval}-${pattern.offset}-${pattern.count}`;
 
       if (!seen.has(key)) {
