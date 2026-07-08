@@ -246,7 +246,11 @@ const count = placements.length;
         const rateDifference = Math.abs(count - targetDispensers);
         const percentOffTarget = rateDifference / targetDispensers;
 
-        if (percentOffTarget > 0.10) continue;
+if (input.inventoryIsLimited && count > targetDispensers) continue;
+
+if (!input.inventoryIsLimited && percentOffTarget > 0.10) continue;
+
+if (input.inventoryIsLimited && count < targetDispensers * 0.75) continue;
 
         const actualAreaPerDispenser =
           rowInterval *
@@ -763,7 +767,10 @@ function buildMapView(layout, maxRows, maxTrees, className, input) {
 function renderInstructions(plan, input) {
   const difference = plan.count - input.targetDispensers;
   const percentDifference = plan.percentRateDifference * 100;
-
+const extraDispensers =
+  input.inventoryIsLimited && plan.count < input.targetDispensers
+    ? input.targetDispensers - plan.count
+    : 0;
   instructionsEl.innerHTML = `
     <h2>Field Instructions</h2>
 
@@ -773,6 +780,11 @@ function renderInstructions(plan, input) {
       <li>Target dispensers: ${input.targetDispensers}</li>
       <li>Pattern uses: ${plan.count}</li>
       <li>Difference from target: ${difference > 0 ? "+" : ""}${difference}</li>
+      ${
+  extraDispensers > 0
+    ? `<li>Place remaining ${extraDispensers} dispenser${extraDispensers === 1 ? "" : "s"} along the riskiest border or highest-pressure edge.</li>`
+    : ``
+}
       <li>Rate difference: ${percentDifference.toFixed(1)}%</li>
       <li>Expected coverage area: ${input.targetAreaPerDispenser.toFixed(0)} sq ft per dispenser</li>
       <li>Pattern coverage area: ${plan.actualAreaPerDispenser.toFixed(0)} sq ft per dispenser</li>
