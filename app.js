@@ -173,7 +173,6 @@ const coverageQuality = scoreCoverageQuality(
         const staggerBonus = offset > 0 ? -500 : 0;
 
         const crewEaseScore =
-  rowInterval * -100 + treeInterval;
 
 const crewEaseScore =
   rowInterval * -10 + treeInterval;
