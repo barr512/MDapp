@@ -133,12 +133,14 @@ function getBestPatterns(input) {
 
         const staggerBonus = offset > 0 ? -500 : 0;
 
-        const score =
-          coverageDifferencePercent * 10000 +
-          rateDifference * 1000 +
-          rowInterval * 10 +
-          treeInterval +
-          staggerBonus;
+        const crewEaseScore =
+  rowInterval * -100 + treeInterval;
+
+const score =
+  coverageDifferencePercent * 10000 +
+  rateDifference * 1000 +
+  crewEaseScore +
+  staggerBonus;
 
         candidatePatterns.push({
           rowInterval,
