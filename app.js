@@ -160,7 +160,15 @@ function getBestPatterns(input) {
   const seen = new Set();
 
   candidatePatterns
-    .sort((a, b) => a.score - b.score)
+   .sort((a, b) => {
+  const scoreDifference = a.score - b.score;
+
+  if (Math.abs(scoreDifference) < 1) {
+    return b.offset - a.offset;
+  }
+
+  return scoreDifference;
+})
     .forEach(pattern => {
       const key = `${pattern.rowInterval}-${pattern.treeInterval}-${pattern.offset}-${pattern.count}`;
 
