@@ -10,6 +10,16 @@ const setupScreen = document.getElementById("setupScreen");
 const resultsScreen = document.getElementById("resultsScreen");
 const backBtn = document.getElementById("backBtn");
 const topBackBtn = document.getElementById("topBackBtn");
+const productSelect = document.getElementById("productSelect");
+const rateInput = document.getElementById("rate");
+
+if (productSelect && rateInput) {
+  productSelect.addEventListener("change", () => {
+    if (productSelect.value) {
+      rateInput.value = productSelect.value;
+    }
+  });
+}
 let currentInput = null;
 let currentPlans = [];
 
