@@ -119,7 +119,7 @@ function getBestPatterns(input) {
         const rateDifference = Math.abs(count - targetDispensers);
         const percentOffTarget = rateDifference / targetDispensers;
 
-        if (percentOffTarget > 0.03) continue;
+        if (percentOffTarget > 0.10) continue;
 
         const actualAreaPerDispenser =
           rowInterval *
@@ -188,8 +188,10 @@ function generatePlans() {
 
   currentInput = input;
   currentPlans = engineResults.patterns.map(pattern =>
-    convertEnginePatternToUiPlan(pattern, engineResults.orchard, input)
-  );
+  convertEnginePatternToUiPlan(pattern, engineResults.orchard, input)
+);
+
+assignPatternBadges(currentPlans);
 
   
 
