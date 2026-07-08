@@ -473,6 +473,11 @@ function renderOptions(plans) {
   optionsEl.innerHTML = "";
 
   plans.forEach((plan, index) => {
+  const repeatedMatch = plans.some((otherPlan, otherIndex) =>
+    otherIndex !== index &&
+    Math.round(otherPlan.actualRate) === Math.round(plan.actualRate) &&
+    otherPlan.percentCoverageDifference.toFixed(3) === plan.percentCoverageDifference.toFixed(3)
+  );
     const card = document.createElement("section");
     card.className = "option-card";
 
@@ -499,7 +504,11 @@ function renderOptions(plans) {
     </div>
   </div>
 
-  <p class="muted">Tap to view pattern details.</p>
+  ${
+    repeatedMatch
+      ? `<p class="muted">Same rate and coverage fit as another option, but with a different row/tree starting pattern.</p>`
+      : `<p class="muted">Tap to view pattern details.</p>`
+  }
 `;
 
     card.addEventListener("click", () => {
