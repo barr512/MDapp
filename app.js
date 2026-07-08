@@ -547,7 +547,7 @@ function renderInstructions(plan, input) {
       <li>Coverage difference: ${(plan.percentCoverageDifference * 100).toFixed(1)}%</li>
       <li>Estimated row length: ${input.estimatedRowLength.toFixed(0)} ft</li>
       <li>Estimated trees per row: ${input.treesPerRow}</li>
-      <li>${getCrewInstructions(input)}</li>
+      
     </ul>
 
     <button class="secondary-button" onclick="showOptionsScreen()">
@@ -556,10 +556,7 @@ function renderInstructions(plan, input) {
   `;
 }
 
-function getCrewInstructions(input) {
-  if (input.crewSize === 1) {
-    return "One person mode: start Row 1 from one end, then start the next treated row from the opposite end. Continue alternating starting ends through the block.";
-  }
+
 
   return `${input.crewSize}-person crew mode: divide rows evenly among workers. Each worker should use the same treated-row stagger pattern within their assigned rows.`;
 }
