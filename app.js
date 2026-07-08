@@ -292,12 +292,7 @@ coverageScore: coverageQuality.coverageScore,
 
   candidatePatterns
   .sort((a, b) => {
-    // 1. Best actual spacing quality first
-    if (a.coverageScore !== b.coverageScore) {
-      return a.coverageScore - b.coverageScore;
-    }
-
-    // 2. Then best coverage fit
+    // 1. Best coverage fit first
     if (a.coverageDifferencePercent !== b.coverageDifferencePercent) {
       return a.coverageDifferencePercent - b.coverageDifferencePercent;
     }
@@ -310,12 +305,16 @@ coverageScore: coverageQuality.coverageScore,
       return rateDifferenceA - rateDifferenceB;
     }
 
-    // 3. Prefer staggered/offset patterns when otherwise close
+    // 3. Then actual spacing quality
+    if (a.coverageScore !== b.coverageScore) {
+      return a.coverageScore - b.coverageScore;
+    }
+
+    // 4. Prefer staggered layouts if still tied
     if (a.offset !== b.offset) {
       return b.offset - a.offset;
     }
 
-    // 4. Final tie-breaker: overall score
     return a.score - b.score;
   })
   .forEach(pattern => {
