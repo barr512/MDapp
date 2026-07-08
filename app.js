@@ -170,10 +170,17 @@ function getBestPatterns(input) {
       }
     });
 
-  return {
-    orchard,
-    patterns: uniquePatterns.slice(0, 3)
-  };
+  const bestPattern = uniquePatterns[0];
+
+const preferredPatterns = uniquePatterns.filter(pattern => {
+  if (pattern === bestPattern) return true;
+  return pattern.offset > 0;
+});
+
+return {
+  orchard,
+  patterns: preferredPatterns.slice(0, 3)
+};
 }
 
 function generatePlans() {
