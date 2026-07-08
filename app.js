@@ -128,31 +128,72 @@ function getBestPatterns(input) {
         const placements = [];
         let treatedRowIndex = 0;
 
-        const rowStart = input.pressureEdge === "south" ? input.rows : 1;
-const rowEnd = input.pressureEdge === "south" ? 1 : input.rows;
-const rowStep = input.pressureEdge === "south" ? -1 : 1;
+        const rowsRunNorthSouth = input.rowDirection === "north-south";
 
-for (let row = rowStart; input.pressureEdge === "south" ? row >= rowEnd : row <= rowEnd; row += rowStep) {
+let rowStart = 1;
+let rowEnd = input.rows;
+let rowStep = 1;
+
+if (
+  (rowsRunNorthSouth && input.pressureEdge === "south") ||
+  (!rowsRunNorthSouth && input.pressureEdge === "east")
+) {
+  rowStart = input.rows;
+  rowEnd = 1;
+  rowStep = -1;
+}
+
+const treeStartFromPressure =
+  (rowsRunNorthSouth && input.pressureEdge === "west") ||
+  (!rowsRunNorthSouth && input.pressureEdge === "south");
+
+for (
+  let row = rowStart;
+  rowStep === 1 ? row <= rowEnd : row >= rowEnd;
+  row += rowStep
+) {
   const rowDistanceFromPressureEdge = Math.abs(row - rowStart);
 
   if (rowDistanceFromPressureEdge % rowInterval !== 0) continue;
 
   const rowOffset = treatedRowIndex % 2 === 0 ? 0 : offset;
 
-          for (let idealTree = 1 + rowOffset; idealTree <= treesPerRow; idealTree += treeInterval) {
-            const closestTree = Math.max(
-              1,
-              Math.min(treesPerRow, Math.round(idealTree))
-            );
+  if (treeStartFromPressure) {
+    for (
+      let idealTree = treesPerRow - rowOffset;
+      idealTree >= 1;
+      idealTree -= treeInterval
+    ) {
+      const closestTree = Math.max(
+        1,
+        Math.min(treesPerRow, Math.round(idealTree))
+      );
 
-            placements.push({
-              row,
-              tree: closestTree
-            });
-          }
+      placements.push({
+        row,
+        tree: closestTree
+      });
+    }
+  } else {
+    for (
+      let idealTree = 1 + rowOffset;
+      idealTree <= treesPerRow;
+      idealTree += treeInterval
+    ) {
+      const closestTree = Math.max(
+        1,
+        Math.min(treesPerRow, Math.round(idealTree))
+      );
 
-          treatedRowIndex++;
-        }
+      placements.push({
+        row,
+        tree: closestTree
+      });
+    }
+  }
+
+  treatedRowIndex++;
+}
 
         const count = placements.length;
         if (count === 0) continue;
@@ -450,11 +491,11 @@ function selectPlan(plan, input) {
     ${describePattern(plan)}
   `;
 
-  renderMap(plan.layout);
+ renderMap(plan.layout, input);
   renderInstructions(plan, input);
 }
 
-function renderMap(layout) {
+function renderMap(layout, input) {
   mapEl.innerHTML = "";
 
   const previewTitle = document.createElement("h3");
@@ -465,74 +506,126 @@ function renderMap(layout) {
     layout,
     12,
     40,
-    "orchard-map preview-map"
+    "orchard-map preview-map",
+    input
   );
 
   mapEl.appendChild(preview);
 
   const overviewTitle = document.createElement("h3");
-overviewTitle.textContent = "Whole Block Overview";
-mapEl.appendChild(overviewTitle);
+  overviewTitle.textContent = "Whole Block Overview";
+  mapEl.appendChild(overviewTitle);
 
-const expandBtn = document.createElement("button");
-expandBtn.className = "secondary-button";
-expandBtn.textContent = "Show Whole Block Map";
-mapEl.appendChild(expandBtn);
+  const expandBtn = document.createElement("button");
+  expandBtn.className = "secondary-button";
+  expandBtn.textContent = "Show Whole Block Map";
+  mapEl.appendChild(expandBtn);
 
-let overviewVisible = false;
-let overview = null;
+  let overviewVisible = false;
+  let overview = null;
 
-expandBtn.addEventListener("click", () => {
-  overviewVisible = !overviewVisible;
+  expandBtn.addEventListener("click", () => {
+    overviewVisible = !overviewVisible;
 
-  if (overviewVisible) {
-    expandBtn.textContent = "Hide Whole Block Map";
+    if (overviewVisible) {
+      expandBtn.textContent = "Hide Whole Block Map";
 
-    overview = buildMapView(
-      layout,
-      layout.length,
-      layout[0].length,
-      "orchard-map overview-map"
-    );
+      overview = buildMapView(
+        layout,
+        layout.length,
+        layout[0].length,
+        "orchard-map overview-map",
+        input
+      );
 
-    mapEl.appendChild(overview);
-  } else {
-    expandBtn.textContent = "Show Whole Block Map";
+      mapEl.appendChild(overview);
+    } else {
+      expandBtn.textContent = "Show Whole Block Map";
 
-    if (overview) {
-      overview.remove();
-      overview = null;
+      if (overview) {
+        overview.remove();
+        overview = null;
+      }
     }
-  }
-});
+  });
 }
 
-function buildMapView(layout, maxRows, maxTrees, className) {
+function buildMapView(layout, maxRows, maxTrees, className, input) {
   const rows = Math.min(layout.length, maxRows);
   const treesPerRow = Math.min(layout[0].length, maxTrees);
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "map-wrapper";
+
+  const northLabel = document.createElement("div");
+  northLabel.className = "map-direction north-label";
+  northLabel.textContent = "N";
+  wrapper.appendChild(northLabel);
+
+  const middle = document.createElement("div");
+  middle.className = "map-middle";
+
+  const westLabel = document.createElement("div");
+  westLabel.className = "map-direction side-label";
+  westLabel.textContent = "W";
+  middle.appendChild(westLabel);
 
   const orchardEl = document.createElement("div");
   orchardEl.className = className;
 
-  for (let treeIndex = 0; treeIndex < treesPerRow; treeIndex++) {
-    const treeLine = document.createElement("div");
-    treeLine.className = "tree-line";
-
+  if (input.rowDirection === "east-west") {
     for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
-      const tree = document.createElement("div");
+      const treeLine = document.createElement("div");
+      treeLine.className = "tree-line";
 
-      tree.className =
-        layout[rowIndex][treeIndex]
-          ? "tree dispenser"
-          : "tree";
+      for (let treeIndex = 0; treeIndex < treesPerRow; treeIndex++) {
+        const tree = document.createElement("div");
 
-      treeLine.appendChild(tree);
+        tree.className =
+          layout[rowIndex][treeIndex]
+            ? "tree dispenser"
+            : "tree";
+
+        treeLine.appendChild(tree);
+      }
+
+      orchardEl.appendChild(treeLine);
     }
+  } else {
+    for (let treeIndex = 0; treeIndex < treesPerRow; treeIndex++) {
+      const treeLine = document.createElement("div");
+      treeLine.className = "tree-line";
 
-    orchardEl.appendChild(treeLine);
+      for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
+        const tree = document.createElement("div");
+
+        tree.className =
+          layout[rowIndex][treeIndex]
+            ? "tree dispenser"
+            : "tree";
+
+        treeLine.appendChild(tree);
+      }
+
+      orchardEl.appendChild(treeLine);
+    }
   }
 
-  return orchardEl;
+  middle.appendChild(orchardEl);
+
+  const eastLabel = document.createElement("div");
+  eastLabel.className = "map-direction side-label";
+  eastLabel.textContent = "E";
+  middle.appendChild(eastLabel);
+
+  wrapper.appendChild(middle);
+
+  const southLabel = document.createElement("div");
+  southLabel.className = "map-direction south-label";
+  southLabel.textContent = "S";
+  wrapper.appendChild(southLabel);
+
+  return wrapper;
 }
 
 function renderInstructions(plan, input) {
