@@ -203,13 +203,7 @@ for (
   treatedRowIndex++;
 }
 
-        addPressureEdgeAnchors(
-  placements,
-  orchard,
-  input,
-  rowInterval,
-  treeInterval
-);
+       
 
 const count = placements.length;
         if (count === 0) continue;
