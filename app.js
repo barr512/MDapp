@@ -26,17 +26,7 @@ function getInputs() {
     rowSpacing: Number(document.getElementById("rowSpacing").value),
     treeSpacing: Number(document.getElementById("treeSpacing").value),
     targetRate: Number(document.getElementById("rate").value),
-    function getInputs() {
-  return {
-    acres: Number(document.getElementById("acres").value),
-    rows: Number(document.getElementById("rows").value),
-    rowSpacing: Number(document.getElementById("rowSpacing").value),
-    treeSpacing: Number(document.getElementById("treeSpacing").value),
-    targetRate: Number(document.getElementById("rate").value),
-    crewSize: Number(document.getElementById("crewSize").value),
-    pressureEdge: document.getElementById("pressureEdge").value
-  };
-}
+    
   };
 }
 
@@ -574,8 +564,6 @@ function renderInstructions(plan, input) {
 
 
 
-  return `${input.crewSize}-person crew mode: divide rows evenly among workers. Each worker should use the same treated-row stagger pattern within their assigned rows.`;
-}
 
 function ordinal(number) {
   const suffixes = ["th", "st", "nd", "rd"];
