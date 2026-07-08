@@ -67,6 +67,14 @@ function scoreCoverageQuality(placements, orchard, input) {
   let totalNearestDistance = 0;
   let worstNearestDistance = 0;
 
+  const rowCounts = new Map();
+  const treeCounts = new Map();
+
+  placements.forEach(place => {
+    rowCounts.set(place.row, (rowCounts.get(place.row) || 0) + 1);
+    treeCounts.set(place.tree, (treeCounts.get(place.tree) || 0) + 1);
+  });
+
   orchard.trees.forEach(tree => {
     let nearestDistance = Infinity;
 
@@ -91,12 +99,27 @@ function scoreCoverageQuality(placements, orchard, input) {
   const averageNearestDistance =
     totalNearestDistance / orchard.trees.length;
 
+  const rowUseSpread = Math.max(...rowCounts.values()) - Math.min(...rowCounts.values());
+  const treeUseSpread = Math.max(...treeCounts.values()) - Math.min(...treeCounts.values());
+
+  const clusterPenalty = rowUseSpread + treeUseSpread;
+
+  const coverageScore =
+    averageNearestDistance * 1 +
+    worstNearestDistance * 2 +
+    clusterPenalty * 5;
+
+  const coverageUniformity = Math.max(
+    0,
+    100 - coverageScore / 10
+  );
+
   return {
     averageNearestDistance,
     worstNearestDistance,
-    coverageScore:
-      averageNearestDistance * 1 +
-      worstNearestDistance * 2
+    clusterPenalty,
+    coverageScore,
+    coverageUniformity
   };
 }
 
@@ -246,6 +269,7 @@ const score =
          averageNearestDistance: coverageQuality.averageNearestDistance,
 worstNearestDistance: coverageQuality.worstNearestDistance,
 coverageScore: coverageQuality.coverageScore,
+     coverageUniformity: coverageQuality.coverageUniformity,     
           rowInterval,
           treeInterval,
           offset,
