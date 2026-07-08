@@ -359,14 +359,14 @@ function describePattern(plan) {
       ? "every tree"
       : `every ${ordinal(plan.treeInterval)} tree`;
 
-  const staggerText =
-    plan.offset > 0
-      ? " with treated-row stagger"
-      : "";
+  if (plan.offset > 0) {
+    const startTree = 1 + plan.offset;
 
-  return `Place on ${treeText} in ${rowText}${staggerText}.`;
+    return `Place on ${treeText} in ${rowText}. Start the first treated row on Tree 1. Start the next treated row on Tree ${startTree}, then continue alternating those starting positions through the block.`;
+  }
+
+  return `Place on ${treeText} in ${rowText}, starting on Tree 1.`;
 }
-
 function selectPlan(plan, input) {
   mapSection.classList.remove("hidden");
   instructionsEl.classList.remove("hidden");
