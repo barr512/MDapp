@@ -511,7 +511,7 @@ function renderOptions(plans) {
 
   ${
     repeatedMatch
-      ? `<p class="muted">Same rate and coverage fit as another option, but with a different row/tree starting pattern.</p>`
+      ? `<p class="muted">Same rate and coverage fit as another option, but with a different spacing pattern.</p>`
       : `<p class="muted">Tap to view pattern details.</p>`
   }
 `;
