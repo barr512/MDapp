@@ -364,16 +364,17 @@ function generatePlans() {
 
   const input = getInputs();
 
+input.labelTargetDispensers =
+  Math.round(input.acres * input.targetRate);
+
 input.inventoryIsLimited =
   input.availableDispensers &&
   input.availableDispensers < input.labelTargetDispensers;
-  const engineResults = getBestPatterns(input);
 
-  input.labelTargetDispensers = Math.round(input.acres * input.targetRate);
+const engineResults = getBestPatterns(input);
 
 input.targetDispensers =
-  input.availableDispensers &&
-  input.availableDispensers < input.labelTargetDispensers
+  input.inventoryIsLimited
     ? input.availableDispensers
     : input.labelTargetDispensers;
 
