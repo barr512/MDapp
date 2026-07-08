@@ -776,14 +776,12 @@ function buildMapView(layout, maxRows, maxTrees, className, input) {
 function renderInstructions(plan, input) {
   const difference = plan.count - input.targetDispensers;
   const percentDifference = plan.percentRateDifference * 100;
+
   const extraDispensers =
-  input.availableDispensers && plan.count < input.availableDispensers
-    ? input.availableDispensers - plan.count
-    : 0;
-const extraDispensers =
-  input.inventoryIsLimited && plan.count < input.targetDispensers
-    ? input.targetDispensers - plan.count
-    : 0;
+    input.availableDispensers && plan.count < input.availableDispensers
+      ? input.availableDispensers - plan.count
+      : 0;
+
   instructionsEl.innerHTML = `
     <h2>Field Instructions</h2>
 
@@ -792,38 +790,24 @@ const extraDispensers =
     <ul class="instructions-list">
       <li>Target dispensers: ${input.targetDispensers}</li>
       <li>Pattern uses: ${plan.count}</li>
+
       ${
-  extraDispensers > 0
-    ? `<li>Use the remaining ${extraDispensers} dispenser${extraDispensers === 1 ? "" : "s"} on the riskiest border or highest-pressure edge.</li>`
-    : ``
-}
+        extraDispensers > 0
+          ? `<li>Use the remaining ${extraDispensers} dispenser${extraDispensers === 1 ? "" : "s"} on the riskiest border or highest-pressure edge.</li>`
+          : ``
+      }
+
       <li>Difference from target: ${difference > 0 ? "+" : ""}${difference}</li>
-      ${
-  extraDispensers > 0
-    ? `<li>Place remaining ${extraDispensers} dispenser${extraDispensers === 1 ? "" : "s"} along the riskiest border or highest-pressure edge.</li>`
-    : ``
-}
       <li>Rate difference: ${percentDifference.toFixed(1)}%</li>
       <li>Expected coverage area: ${input.targetAreaPerDispenser.toFixed(0)} sq ft per dispenser</li>
       <li>Pattern coverage area: ${plan.actualAreaPerDispenser.toFixed(0)} sq ft per dispenser</li>
       <li>Coverage difference: ${(plan.percentCoverageDifference * 100).toFixed(1)}%</li>
       <li>Estimated row length: ${input.estimatedRowLength.toFixed(0)} ft</li>
       <li>Estimated trees per row: ${input.treesPerRow}</li>
-      
     </ul>
 
     <button class="secondary-button" onclick="showOptionsScreen()">
       Back to Pattern Options
     </button>
   `;
-}
-
-
-
-
-function ordinal(number) {
-  const suffixes = ["th", "st", "nd", "rd"];
-  const value = number % 100;
-
-  return number + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
 }
