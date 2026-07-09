@@ -106,6 +106,7 @@ function refreshProductOptions() {
     productSelect.appendChild(option);
   });
 
+   productSelect.value = "";
   rateInput.value = "";
   productRateNote.textContent = "";
 }
