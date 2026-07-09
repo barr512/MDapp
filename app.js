@@ -21,6 +21,7 @@ const products = {
     max: 36,
     defaultRate: 32,
     unit: "dispensers per acre"
+    pestCategory: "CM"
   },
   "cmda-combo-pp": {
     name: "CIDETRAK CMDA COMBO PP",
@@ -28,6 +29,7 @@ const products = {
     max: 400,
     defaultRate: 200,
     unit: "dispensers per acre"
+    pestCategory: "CM"
   },
   "cmda-ofm-meso": {
     name: "CIDETRAK CMDA + OFM MESO",
@@ -35,6 +37,7 @@ const products = {
     max: 38,
     defaultRate: 38,
     unit: "dispensers per acre"
+    pestCategory: "CM & OFM"
   },
   "cm-ofm-combo-meso": {
     name: "CIDETRAK CM-OFM COMBO MESO",
@@ -42,6 +45,7 @@ const products = {
     max: 36,
     defaultRate: 32,
     unit: "dispensers per acre"
+    pestCategory: "CM & OFM"
   },
   "cm-ofm-combo-pp": {
     name: "CIDETRAK CM-OFM COMBO PP",
@@ -49,6 +53,7 @@ const products = {
     max: 440,
     defaultRate: 200,
     unit: "dispensers per acre"
+    pestCategory: "CM & OFM"
   },
   "cmda-lr-dual-meso": {
     name: "CIDETRAK CMDA + LR DUAL MESO",
@@ -56,6 +61,7 @@ const products = {
     max: 36,
     defaultRate: 32,
     unit: "dispensers per acre"
+    pestCategory: "CM & OBLR"
   },
   "ofm-l-meso": {
     name: "CIDETRAK OFM-L MESO",
@@ -63,6 +69,7 @@ const products = {
     max: 35,
     defaultRate: 32,
     unit: "dispensers per acre"
+    pestCategory: "OFM"
   },
   "ofm-l-pp": {
     name: "CIDETRAK OFM-L PP",
@@ -70,6 +77,7 @@ const products = {
     max: 200,
     defaultRate: 170,
     unit: "dispensers per acre"
+    pestCategory: "OFM"
   },
   "lr-meso": {
     name: "CIDETRAK LR MESO",
@@ -77,13 +85,9 @@ const products = {
     max: 36,
     defaultRate: 32,
     unit: "dispensers per acre"
-  },
-  "dbm-meso": {
-    name: "CIDETRAK DBM MESO",
-    min: 4,
-    max: 8,
-    defaultRate: 4,
-    unit: "CPDs per acre"
+    pestCategory: "OBLR"
+  
+  
   }
 };
 
