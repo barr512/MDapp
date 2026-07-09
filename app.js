@@ -18,49 +18,49 @@ const products = {
     name: "CIDETRAK CMDA COMBO MESO-A",
     min: 32,
     max: 36,
-    defaultRate: 34,
+    defaultRate: 32,
     unit: "dispensers per acre"
   },
   "cmda-combo-pp": {
     name: "CIDETRAK CMDA COMBO PP",
     min: 200,
     max: 400,
-    defaultRate: 300,
+    defaultRate: 200,
     unit: "dispensers per acre"
   },
   "cmda-ofm-meso": {
     name: "CIDETRAK CMDA + OFM MESO",
     min: 32,
     max: 38,
-    defaultRate: 35,
+    defaultRate: 38,
     unit: "dispensers per acre"
   },
   "cm-ofm-combo-meso": {
     name: "CIDETRAK CM-OFM COMBO MESO",
     min: 32,
     max: 36,
-    defaultRate: 34,
+    defaultRate: 32,
     unit: "dispensers per acre"
   },
   "cm-ofm-combo-pp": {
     name: "CIDETRAK CM-OFM COMBO PP",
     min: 200,
     max: 440,
-    defaultRate: 320,
+    defaultRate: 200,
     unit: "dispensers per acre"
   },
   "cmda-lr-dual-meso": {
     name: "CIDETRAK CMDA + LR DUAL MESO",
     min: 32,
     max: 36,
-    defaultRate: 34,
+    defaultRate: 32,
     unit: "dispensers per acre"
   },
   "ofm-l-meso": {
     name: "CIDETRAK OFM-L MESO",
     min: 32,
     max: 35,
-    defaultRate: 34,
+    defaultRate: 32,
     unit: "dispensers per acre"
   },
   "ofm-l-pp": {
@@ -74,14 +74,14 @@ const products = {
     name: "CIDETRAK LR MESO",
     min: 32,
     max: 36,
-    defaultRate: 34,
+    defaultRate: 32,
     unit: "dispensers per acre"
   },
   "dbm-meso": {
     name: "CIDETRAK DBM MESO",
     min: 4,
     max: 8,
-    defaultRate: 6,
+    defaultRate: 4,
     unit: "CPDs per acre"
   }
 };
