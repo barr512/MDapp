@@ -10,6 +10,7 @@ const setupScreen = document.getElementById("setupScreen");
 const resultsScreen = document.getElementById("resultsScreen");
 const backBtn = document.getElementById("backBtn");
 const topBackBtn = document.getElementById("topBackBtn");
+const targetPests = document.getElementById("targetPests");
 const productSelect = document.getElementById("productSelect");
 const rateInput = document.getElementById("rate");
 const productRateNote = document.getElementById("productRateNote");
