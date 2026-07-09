@@ -12,7 +12,7 @@ const backBtn = document.getElementById("backBtn");
 const topBackBtn = document.getElementById("topBackBtn");
 const productSelect = document.getElementById("productSelect");
 const rateInput = document.getElementById("rate");
-
+const productRateNote = document.getElementById("productRateNote");
 const products = {
   "cmda-combo-meso-a": {
     name: "CIDETRAK CMDA COMBO MESO-A",
@@ -91,7 +91,20 @@ if (productSelect && rateInput) {
     const selectedProduct = products[productSelect.value];
 
     if (selectedProduct) {
+      // Fill the recommended planning rate
       rateInput.value = selectedProduct.defaultRate;
+
+      // Show the label range and recommendation
+      if (productRateNote) {
+        productRateNote.textContent =
+          `Label rate: ${selectedProduct.min}-${selectedProduct.max} ${selectedProduct.unit}. ` +
+          `Recommended planning rate: ${selectedProduct.defaultRate}. ` +
+          `You may enter any rate within the label range.`;
+      }
+    } else {
+      if (productRateNote) {
+        productRateNote.textContent = "";
+      }
     }
   });
 }
