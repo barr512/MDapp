@@ -118,19 +118,33 @@
 
             </label>
             <label>
-   <label>
-  Product
-  <span class="hint">Optional — select a product to fill the label rate</span>
-  <select id="productSelect">
-    <option value="">Manual rate entry</option>
-    <option value="32">Example product — 32 dispensers/acre</option>
-    <option value="100">Example product — 100 dispensers/acre</option>
-    <option value="200">Example product — 200 dispensers/acre</option>
-  </select>
-</label>             
-  Available dispensers
-  <span class="hint">Optional — leave blank to use the label rate</span>
-  <input id="availableDispensers" type="number" min="1" placeholder="Example: 180">
+    Product
+    <span class="hint">Optional — select a product to fill the label rate</span>
+
+    <select id="productSelect">
+        <option value="">Manual rate entry</option>
+        <option value="34">CIDETRAK CMDA COMBO MESO-A — 32-36/acre</option>
+        <option value="300">CIDETRAK CMDA COMBO PP — 200-400/acre</option>
+        <option value="35">CIDETRAK CMDA + OFM MESO — 32-38/acre</option>
+        <option value="34">CIDETRAK CM-OFM COMBO MESO — 32-36/acre</option>
+        <option value="320">CIDETRAK CM-OFM COMBO PP — 200-440/acre</option>
+        <option value="34">CIDETRAK CMDA + LR DUAL MESO — 32-36/acre</option>
+        <option value="34">CIDETRAK OFM-L MESO — 32-35/acre</option>
+        <option value="170">CIDETRAK OFM-L PP — 100-200/acre</option>
+        <option value="34">CIDETRAK LR MESO — 32-36/acre</option>
+        <option value="6">CIDETRAK DBM MESO — 4-8 CPDs/acre</option>
+    </select>
+</label>
+
+<label>
+    Available dispensers
+    <span class="hint">Optional — leave blank to use the label rate</span>
+
+    <input
+        id="availableDispensers"
+        type="number"
+        min="1"
+        placeholder="Example: 180">
 </label>
 <label>
     Row Direction
