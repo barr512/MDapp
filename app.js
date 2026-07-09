@@ -13,10 +13,85 @@ const topBackBtn = document.getElementById("topBackBtn");
 const productSelect = document.getElementById("productSelect");
 const rateInput = document.getElementById("rate");
 
+const products = {
+  "cmda-combo-meso-a": {
+    name: "CIDETRAK CMDA COMBO MESO-A",
+    min: 32,
+    max: 36,
+    defaultRate: 34,
+    unit: "dispensers per acre"
+  },
+  "cmda-combo-pp": {
+    name: "CIDETRAK CMDA COMBO PP",
+    min: 200,
+    max: 400,
+    defaultRate: 300,
+    unit: "dispensers per acre"
+  },
+  "cmda-ofm-meso": {
+    name: "CIDETRAK CMDA + OFM MESO",
+    min: 32,
+    max: 38,
+    defaultRate: 35,
+    unit: "dispensers per acre"
+  },
+  "cm-ofm-combo-meso": {
+    name: "CIDETRAK CM-OFM COMBO MESO",
+    min: 32,
+    max: 36,
+    defaultRate: 34,
+    unit: "dispensers per acre"
+  },
+  "cm-ofm-combo-pp": {
+    name: "CIDETRAK CM-OFM COMBO PP",
+    min: 200,
+    max: 440,
+    defaultRate: 320,
+    unit: "dispensers per acre"
+  },
+  "cmda-lr-dual-meso": {
+    name: "CIDETRAK CMDA + LR DUAL MESO",
+    min: 32,
+    max: 36,
+    defaultRate: 34,
+    unit: "dispensers per acre"
+  },
+  "ofm-l-meso": {
+    name: "CIDETRAK OFM-L MESO",
+    min: 32,
+    max: 35,
+    defaultRate: 34,
+    unit: "dispensers per acre"
+  },
+  "ofm-l-pp": {
+    name: "CIDETRAK OFM-L PP",
+    min: 100,
+    max: 200,
+    defaultRate: 170,
+    unit: "dispensers per acre"
+  },
+  "lr-meso": {
+    name: "CIDETRAK LR MESO",
+    min: 32,
+    max: 36,
+    defaultRate: 34,
+    unit: "dispensers per acre"
+  },
+  "dbm-meso": {
+    name: "CIDETRAK DBM MESO",
+    min: 4,
+    max: 8,
+    defaultRate: 6,
+    unit: "CPDs per acre"
+  }
+};
+
 if (productSelect && rateInput) {
   productSelect.addEventListener("change", () => {
-    if (productSelect.value) {
-      rateInput.value = productSelect.value;
+    const selectedProduct = products[productSelect.value];
+
+    if (selectedProduct) {
+      rateInput.value = selectedProduct.defaultRate;
     }
   });
 }
