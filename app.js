@@ -107,7 +107,9 @@ if (topBackBtn) {
   topBackBtn.addEventListener("click", showSetupScreen);
 }
 function getInputs() {
-  return {
+ const selectedProduct = products[productSelect.value] || null;
+
+return {
   acres: Number(document.getElementById("acres").value),
   rows: Number(document.getElementById("rows").value),
   rowSpacing: Number(document.getElementById("rowSpacing").value),
@@ -115,7 +117,8 @@ function getInputs() {
   targetRate: Number(document.getElementById("rate").value),
   availableDispensers: Number(document.getElementById("availableDispensers").value) || null,
   rowDirection: document.getElementById("rowDirection").value,
-  pressureEdge: document.getElementById("pressureEdge").value
+  pressureEdge: document.getElementById("pressureEdge").value,
+  selectedProduct
 };
 }
 
@@ -560,7 +563,11 @@ function renderSummary(input, totalTrees) {
 
   summaryEl.innerHTML = `
    <h2>Choose a Deployment Pattern</h2>
-
+${
+  input.selectedProduct
+    ? `<p class="muted"><strong>Selected product:</strong> ${input.selectedProduct.name}. Label range ${input.selectedProduct.min}-${input.selectedProduct.max} ${input.selectedProduct.unit}.</p>`
+    : `<p class="muted"><strong>Manual rate entry:</strong> No product selected.</p>`
+}
 ${
   input.inventoryIsLimited
     ? `<p class="muted"><strong>Limited inventory mode:</strong> Available dispensers are below the label-rate target. These patterns show the best practical distribution for the amount entered.</p>`
