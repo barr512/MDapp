@@ -88,6 +88,32 @@ const products = {
     pestCategory: "oblr"
   }
 };
+function refreshProductOptions() {
+  const selectedPest = targetPests ? targetPests.value : "";
+
+  productSelect.innerHTML = `<option value="">Manual rate entry</option>`;
+
+  Object.entries(products).forEach(([productKey, product]) => {
+    if (selectedPest && product.pestCategory !== selectedPest) {
+      return;
+    }
+
+    const option = document.createElement("option");
+    option.value = productKey;
+    option.textContent =
+      `${product.name} — ${product.min}-${product.max}/acre`;
+
+    productSelect.appendChild(option);
+  });
+
+  rateInput.value = "";
+  productRateNote.textContent = "";
+}
+if (targetPests && productSelect) {
+  targetPests.addEventListener("change", refreshProductOptions);
+}
+
+refreshProductOptions();
 if (productSelect && rateInput) {
   productSelect.addEventListener("change", () => {
     const selectedProduct = products[productSelect.value];
