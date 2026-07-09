@@ -350,6 +350,12 @@ const targetDispensers = inventoryIsLimited
         if (inventoryIsLimited && count > targetDispensers) continue;
 
         const resultingRate = count / input.acres;
+        if (
+  input.selectedProduct &&
+  resultingRate > input.selectedProduct.max
+) {
+  continue;
+}
         const rateDifference = Math.abs(count - targetDispensers);
         const percentOffTarget = rateDifference / targetDispensers;
 
