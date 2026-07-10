@@ -548,6 +548,8 @@ return {
   orchard,
   patterns: selectedPatterns
 };
+}
+
 function generatePlans() {
   
 
