@@ -200,52 +200,115 @@ function showPlanScreen(plan) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 function scoreCoverageQuality(placements, orchard, input) {
+  if (!placements.length || !orchard.trees.length) {
+    return {
+      averageNearestDistance: Infinity,
+      worstNearestDistance: Infinity,
+      clusterPenalty: Infinity,
+      coverageScore: Infinity,
+      coverageUniformity: 0
+    };
+  }
+
+  /*
+    Scoring every tree against every dispenser is too slow on a phone.
+
+    Instead, sample representative trees and representative dispenser
+    placements. This keeps comparisons consistent while allowing the
+    optimizer to finish.
+  */
+
+  const maximumTreeSamples = 150;
+  const maximumPlacementSamples = 150;
+
+  const treeStep = Math.max(
+    1,
+    Math.ceil(orchard.trees.length / maximumTreeSamples)
+  );
+
+  const placementStep = Math.max(
+    1,
+    Math.ceil(placements.length / maximumPlacementSamples)
+  );
+
+  const sampledTrees = [];
+
+  for (
+    let index = 0;
+    index < orchard.trees.length;
+    index += treeStep
+  ) {
+    sampledTrees.push(orchard.trees[index]);
+  }
+
+  const sampledPlacements = [];
+
+  for (
+    let index = 0;
+    index < placements.length;
+    index += placementStep
+  ) {
+    sampledPlacements.push(placements[index]);
+  }
+
   let totalNearestDistance = 0;
   let worstNearestDistance = 0;
 
-  const rowCounts = new Map();
-  const treeCounts = new Map();
-
-  placements.forEach(place => {
-    rowCounts.set(place.row, (rowCounts.get(place.row) || 0) + 1);
-    treeCounts.set(place.tree, (treeCounts.get(place.tree) || 0) + 1);
-  });
-
-  orchard.trees.forEach(tree => {
+  sampledTrees.forEach(tree => {
     let nearestDistance = Infinity;
 
-    placements.forEach(place => {
+    sampledPlacements.forEach(place => {
       const rowDistance =
-        Math.abs(tree.row - place.row) * input.rowSpacing;
+        Math.abs(tree.row - place.row) *
+        input.rowSpacing;
 
       const treeDistance =
-        Math.abs(tree.tree - place.tree) * input.treeSpacing;
+        Math.abs(tree.tree - place.tree) *
+        input.treeSpacing;
 
       const distance = Math.sqrt(
-        rowDistance ** 2 + treeDistance ** 2
+        rowDistance ** 2 +
+        treeDistance ** 2
       );
 
-      nearestDistance = Math.min(nearestDistance, distance);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+      }
     });
 
     totalNearestDistance += nearestDistance;
-    worstNearestDistance = Math.max(worstNearestDistance, nearestDistance);
+
+    if (nearestDistance > worstNearestDistance) {
+      worstNearestDistance = nearestDistance;
+    }
   });
 
   const averageNearestDistance =
-    totalNearestDistance / orchard.trees.length;
+    totalNearestDistance / sampledTrees.length;
 
-  const rowUseSpread = Math.max(...rowCounts.values()) - Math.min(...rowCounts.values());
-  const treeUseSpread = Math.max(...treeCounts.values()) - Math.min(...treeCounts.values());
+  const rowCounts = new Map();
+
+  placements.forEach(place => {
+    rowCounts.set(
+      place.row,
+      (rowCounts.get(place.row) || 0) + 1
+    );
+  });
+
+  const rowCountValues = [...rowCounts.values()];
+
+  const rowUseSpread = rowCountValues.length
+    ? Math.max(...rowCountValues) -
+      Math.min(...rowCountValues)
+    : 0;
 
   const clusterPenalty =
-  rowUseSpread * 10 +
-  treeUseSpread * 25;
+    rowUseSpread * 20;
 
   const coverageScore =
-    averageNearestDistance * 1 +
+    averageNearestDistance +
     worstNearestDistance * 2 +
-    clusterPenalty * 5;
+    clusterPenalty;
 
   const coverageUniformity = Math.max(
     0,
@@ -885,6 +948,20 @@ ${
 
 function renderOptions(plans) {
   optionsEl.innerHTML = "";
+
+  if (!plans.length) {
+    optionsEl.innerHTML = `
+      <section class="option-card">
+        <strong>No qualifying patterns were generated.</strong>
+        <p class="muted">
+          The entered block dimensions could not produce a pattern within
+          the current rate limits.
+        </p>
+      </section>
+    `;
+
+    return;
+  }
 
   plans.forEach((plan, index) => {
   const repeatedMatch = plans.some((otherPlan, otherIndex) =>
