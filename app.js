@@ -620,15 +620,46 @@ function buildRepeatingTreePattern(
     .sort((a, b) => a - b);
 }
 
-function getSimpleStartOptions(interval) {
-  const options = [
-    1,
-    1 + Math.floor(interval / 2)
-  ];
+function getSimpleStartOptions(
+  interval,
+  searchAllStarts = false
+) {
+  /*
+    At the recommended rate, keep the search limited
+    to the simplest crew-friendly starting positions.
+  */
+  if (!searchAllStarts) {
+    const options = [
+      1,
+      1 + Math.floor(interval / 2)
+    ];
 
-  return [...new Set(options)].filter(
-    start => start >= 1 && start <= interval
-  );
+    return [...new Set(options)].filter(
+      start =>
+        start >= 1 &&
+        start <= interval
+    );
+  }
+
+  /*
+    When the grower selects a different rate, test
+    every possible start within the repeating interval.
+
+    This gives the engine enough choices to reach the
+    grower's requested dispenser total rather than
+    settling several dispensers below it.
+  */
+  const options = [];
+
+  for (
+    let start = 1;
+    start <= interval;
+    start++
+  ) {
+    options.push(start);
+  }
+
+  return options;
 }
 
 function getBestPatterns(input, showClosest = false) {
@@ -791,15 +822,20 @@ function getBestPatterns(input, showClosest = false) {
         const patternBInterval
         of intervalCandidates
       ) {
-        const patternAStartOptions =
-          getSimpleStartOptions(
-            patternAInterval
-          );
+        const searchAllStarts =
+  input.usingCustomProductRate === true;
 
-        const patternBStartOptions =
-          getSimpleStartOptions(
-            patternBInterval
-          );
+const patternAStartOptions =
+  getSimpleStartOptions(
+    patternAInterval,
+    searchAllStarts
+  );
+
+const patternBStartOptions =
+  getSimpleStartOptions(
+    patternBInterval,
+    searchAllStarts
+  );
 
         for (
           const patternAStart
@@ -960,7 +996,28 @@ if (!patternRemainsStaggered) {
   The 3% limit is relaxed only after the user chooses
   "View Closest Practical Patterns."
 */
+/*
+  A grower-selected product rate must be treated as
+  the actual deployment target.
+
+  Permit no more than one dispenser of unavoidable
+  rounding difference during the normal search.
+*/
 if (
+  input.usingCustomProductRate &&
+  !inventoryIsLimited &&
+  !showClosest &&
+  rateDifference > 1
+) {
+  continue;
+}
+
+/*
+  At the product's recommended rate, retain the normal
+  three-percent tolerance.
+*/
+if (
+  !input.usingCustomProductRate &&
   !inventoryIsLimited &&
   !showClosest &&
   percentOffTarget > 0.03
