@@ -842,7 +842,47 @@ if (
                 patternBStart,
                 reverseTrees
               );
+/*
+  Check the complete A/B pattern across the entire row.
 
+  Different intervals can begin staggered but drift together
+  farther down the row. Reject patterns where A and B become
+  too closely aligned anywhere in the block.
+*/
+const minimumInterval = Math.min(
+  patternAInterval,
+  patternBInterval
+);
+
+const minimumRequiredSeparation = Math.max(
+  2,
+  Math.floor(minimumInterval * 0.3)
+);
+
+let patternRemainsStaggered = true;
+
+for (const aTree of patternAPositions) {
+  let nearestBSeparation = Infinity;
+
+  for (const bTree of patternBPositions) {
+    nearestBSeparation = Math.min(
+      nearestBSeparation,
+      Math.abs(aTree - bTree)
+    );
+  }
+
+  if (
+    nearestBSeparation <
+    minimumRequiredSeparation
+  ) {
+    patternRemainsStaggered = false;
+    break;
+  }
+}
+
+if (!patternRemainsStaggered) {
+  continue;
+}
             const placements = [];
 
             treatedRows.forEach(
