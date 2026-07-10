@@ -255,26 +255,64 @@ function scoreCoverageQuality(placements, orchard, input) {
     coverageUniformity
   };
 }
+function buildEvenTreePattern(treesPerRow, dispenserCount, phase = 0) {
+  const count = Math.max(
+    1,
+    Math.min(treesPerRow, Math.round(dispenserCount))
+  );
 
+  const positions = [];
+
+  for (let index = 0; index < count; index++) {
+    const position =
+      1 +
+      Math.floor(
+        ((index + phase) * treesPerRow) /
+        count
+      );
+
+    positions.push(
+      Math.max(1, Math.min(treesPerRow, position))
+    );
+  }
+
+  return [...new Set(positions)];
+}
+
+function orientTreePositions(positions, treesPerRow, reverseTrees) {
+  if (!reverseTrees) {
+    return positions;
+  }
+
+  return positions
+    .map(tree => treesPerRow - tree + 1)
+    .sort((a, b) => a - b);
+}
 function getBestPatterns(input) {
   const SQFT_PER_ACRE = 43560;
 
   const blockArea = input.acres * SQFT_PER_ACRE;
   const totalRowFeet = blockArea / input.rowSpacing;
   const rowLength = totalRowFeet / input.rows;
-  const treesPerRow = Math.round(rowLength / input.treeSpacing);
+  const treesPerRow = Math.max(
+    1,
+    Math.round(rowLength / input.treeSpacing)
+  );
 
-  const labelTargetDispensers = Math.round(input.acres * input.targetRate);
+  const labelTargetDispensers = Math.round(
+    input.acres * input.targetRate
+  );
 
-const inventoryIsLimited =
-  input.availableDispensers &&
-  input.availableDispensers < labelTargetDispensers;
+  const inventoryIsLimited =
+    input.availableDispensers &&
+    input.availableDispensers < labelTargetDispensers;
 
-const targetDispensers = inventoryIsLimited
-  ? input.availableDispensers
-  : labelTargetDispensers;
+  const targetDispensers = inventoryIsLimited
+    ? input.availableDispensers
+    : labelTargetDispensers;
 
-  const targetAreaPerDispenser = SQFT_PER_ACRE / input.targetRate;
+  const targetAreaPerDispenser =
+    SQFT_PER_ACRE / input.targetRate;
 
   const orchard = {
     rows: input.rows,
@@ -291,265 +329,384 @@ const targetDispensers = inventoryIsLimited
 
   const candidatePatterns = [];
 
-  for (let rowInterval = 1; rowInterval <= Math.min(10, input.rows); rowInterval++) {
-    for (let treeInterval = 1; treeInterval <= Math.min(40, treesPerRow); treeInterval++) {
-      for (const offset of [0, Math.floor(treeInterval / 2)]) {
-        const placements = [];
-        let treatedRowIndex = 0;
+  for (
+    let rowInterval = 1;
+    rowInterval <= Math.min(10, input.rows);
+    rowInterval++
+  ) {
+    const rowsRunNorthSouth =
+      input.rowDirection === "north-south";
 
-        const rowsRunNorthSouth = input.rowDirection === "north-south";
+    let rowStart = 1;
+    let rowEnd = input.rows;
+    let rowStep = 1;
 
-        let rowStart = 1;
-        let rowEnd = input.rows;
-        let rowStep = 1;
+    let reverseTrees = false;
 
-        let treeStart = 1;
-        let treeEnd = treesPerRow;
-        let treeStep = treeInterval;
+    if (rowsRunNorthSouth) {
+      if (input.pressureEdge === "east") {
+        rowStart = input.rows;
+        rowEnd = 1;
+        rowStep = -1;
+      }
 
-        if (rowsRunNorthSouth) {
-          if (input.pressureEdge === "east") {
-            rowStart = input.rows;
-            rowEnd = 1;
-            rowStep = -1;
+      if (input.pressureEdge === "south") {
+        reverseTrees = true;
+      }
+    } else {
+      if (input.pressureEdge === "south") {
+        rowStart = input.rows;
+        rowEnd = 1;
+        rowStep = -1;
+      }
+
+      if (input.pressureEdge === "east") {
+        reverseTrees = true;
+      }
+    }
+
+    const treatedRows = [];
+
+    for (
+      let row = rowStart;
+      rowStep === 1 ? row <= rowEnd : row >= rowEnd;
+      row += rowStep
+    ) {
+      const distanceFromStartingEdge =
+        Math.abs(row - rowStart);
+
+      if (distanceFromStartingEdge % rowInterval === 0) {
+        treatedRows.push(row);
+      }
+    }
+
+    if (!treatedRows.length) {
+      continue;
+    }
+
+    const patternARowCount =
+      Math.ceil(treatedRows.length / 2);
+
+    const patternBRowCount =
+      Math.floor(treatedRows.length / 2);
+
+    const averageDispensersPerTreatedRow =
+      targetDispensers / treatedRows.length;
+
+    const minimumPatternACount = Math.max(
+      1,
+      Math.floor(averageDispensersPerTreatedRow) - 5
+    );
+
+    const maximumPatternACount = Math.min(
+      treesPerRow,
+      Math.ceil(averageDispensersPerTreatedRow) + 5
+    );
+
+    for (
+      let patternACount = minimumPatternACount;
+      patternACount <= maximumPatternACount;
+      patternACount++
+    ) {
+      let possiblePatternBCounts = [];
+
+      if (patternBRowCount === 0) {
+        possiblePatternBCounts = [patternACount];
+      } else {
+        const desiredPatternBCount =
+          (
+            targetDispensers -
+            patternARowCount * patternACount
+          ) /
+          patternBRowCount;
+
+        possiblePatternBCounts = [
+          Math.floor(desiredPatternBCount) - 1,
+          Math.floor(desiredPatternBCount),
+          Math.ceil(desiredPatternBCount),
+          Math.ceil(desiredPatternBCount) + 1
+        ];
+      }
+
+      possiblePatternBCounts = [
+        ...new Set(possiblePatternBCounts)
+      ].filter(count =>
+        count >= 1 &&
+        count <= treesPerRow
+      );
+
+      for (const patternBCount of possiblePatternBCounts) {
+        const phaseOptions = [
+          { phaseA: 0.10, phaseB: 0.60 },
+          { phaseA: 0.00, phaseB: 0.50 },
+          { phaseA: 0.25, phaseB: 0.75 }
+        ];
+
+        for (const phaseOption of phaseOptions) {
+          const patternAPositions = orientTreePositions(
+            buildEvenTreePattern(
+              treesPerRow,
+              patternACount,
+              phaseOption.phaseA
+            ),
+            treesPerRow,
+            reverseTrees
+          );
+
+          const patternBPositions = orientTreePositions(
+            buildEvenTreePattern(
+              treesPerRow,
+              patternBCount,
+              phaseOption.phaseB
+            ),
+            treesPerRow,
+            reverseTrees
+          );
+
+          const placements = [];
+
+          treatedRows.forEach((row, treatedRowIndex) => {
+            const rowPositions =
+              treatedRowIndex % 2 === 0
+                ? patternAPositions
+                : patternBPositions;
+
+            rowPositions.forEach(tree => {
+              placements.push({
+                row,
+                tree
+              });
+            });
+          });
+
+          const count = placements.length;
+
+          if (!count) {
+            continue;
           }
 
-          if (input.pressureEdge === "south") {
-            treeStart = treesPerRow;
-            treeEnd = 1;
-            treeStep = -treeInterval;
-          }
-        } else {
-          if (input.pressureEdge === "south") {
-            rowStart = input.rows;
-            rowEnd = 1;
-            rowStep = -1;
-          }
-
-          if (input.pressureEdge === "east") {
-            treeStart = treesPerRow;
-            treeEnd = 1;
-            treeStep = -treeInterval;
-          }
-        }
-
-        for (
-          let row = rowStart;
-          rowStep === 1 ? row <= rowEnd : row >= rowEnd;
-          row += rowStep
-        ) {
-          const rowDistanceFromPressureEdge = Math.abs(row - rowStart);
-
-          if (rowDistanceFromPressureEdge % rowInterval !== 0) continue;
-
-          const rowOffset = treatedRowIndex % 2 === 0 ? 0 : offset;
-
-          let adjustedTreeStart = treeStart;
-
-          if (treeStep > 0) {
-            adjustedTreeStart = treeStart + rowOffset;
-          } else {
-            adjustedTreeStart = treeStart - rowOffset;
-          }
-
-          for (
-            let idealTree = adjustedTreeStart;
-            treeStep > 0 ? idealTree <= treeEnd : idealTree >= treeEnd;
-            idealTree += treeStep
+          if (
+            inventoryIsLimited &&
+            count > targetDispensers
           ) {
-            const closestTree = Math.max(
-              1,
-              Math.min(treesPerRow, Math.round(idealTree))
+            continue;
+          }
+
+          const resultingRate =
+            count / input.acres;
+
+          if (
+            input.selectedProduct &&
+            resultingRate > input.selectedProduct.max
+          ) {
+            continue;
+          }
+
+          const rateDifference =
+            Math.abs(count - targetDispensers);
+
+          const percentOffTarget =
+            Math.abs(
+              resultingRate - input.targetRate
+            ) /
+            input.targetRate;
+
+          if (
+            !inventoryIsLimited &&
+            percentOffTarget > 0.03
+          ) {
+            continue;
+          }
+
+          if (
+            inventoryIsLimited &&
+            count < targetDispensers * 0.75
+          ) {
+            continue;
+          }
+
+          const coverageQuality =
+            scoreCoverageQuality(
+              placements,
+              orchard,
+              input
             );
 
-            placements.push({
-              row,
-              tree: closestTree
-            });
-          }
+          const actualAreaPerDispenser =
+            blockArea / count;
 
-          treatedRowIndex++;
+          const coverageDifferencePercent =
+            Math.abs(
+              actualAreaPerDispenser -
+              targetAreaPerDispenser
+            ) /
+            targetAreaPerDispenser;
+
+          const averagePatternCount =
+            (
+              patternAPositions.length +
+              patternBPositions.length
+            ) / 2;
+
+          const estimatedTreeInterval =
+            averagePatternCount > 0
+              ? Math.max(
+                  1,
+                  Math.round(
+                    treesPerRow /
+                    averagePatternCount
+                  )
+                )
+              : treesPerRow;
+
+          const crewEaseScore =
+            rowInterval * 10 +
+            Math.abs(
+              patternAPositions.length -
+              patternBPositions.length
+            ) * 25;
+
+          const score =
+            coverageQuality.coverageScore +
+            rateDifference * 100 +
+            coverageDifferencePercent * 500 +
+            crewEaseScore;
+
+          candidatePatterns.push({
+            patternType: "alternating-ab",
+            averageNearestDistance:
+              coverageQuality.averageNearestDistance,
+            worstNearestDistance:
+              coverageQuality.worstNearestDistance,
+            coverageScore:
+              coverageQuality.coverageScore,
+            coverageUniformity:
+              coverageQuality.coverageUniformity,
+            rowInterval,
+            treeInterval: estimatedTreeInterval,
+            offset: 1,
+            patternAPositions,
+            patternBPositions,
+            patternACount:
+              patternAPositions.length,
+            patternBCount:
+              patternBPositions.length,
+            placements,
+            count,
+            targetDispensers,
+            resultingRate,
+            percentOffTarget,
+            actualAreaPerDispenser,
+            coverageDifferencePercent,
+            score
+          });
         }
-
-        const count = placements.length;
-        if (count === 0) continue;
-
-        // Limited inventory rule:
-        // never recommend a pattern that uses more dispensers than the grower has.
-        if (inventoryIsLimited && count > targetDispensers) continue;
-
-        const resultingRate = count / input.acres;
-        if (
-  input.selectedProduct &&
-  resultingRate > input.selectedProduct.max
-) {
-  continue;
-}
-        const rateDifference = Math.abs(count - targetDispensers);
-        const percentOffTarget = rateDifference / targetDispensers;
-
-        // Normal label-rate mode allows no more than 3% above or below target.
-if (!inventoryIsLimited && percentOffTarget > 0.03) continue;
-
-        // Limited inventory mode allows lower repeatable patterns,
-        // because leftovers can be placed on the highest-risk border.
-        if (inventoryIsLimited && count < targetDispensers * 0.75) continue;
-
-        const actualAreaPerDispenser =
-          rowInterval *
-          input.rowSpacing *
-          treeInterval *
-          input.treeSpacing;
-
-        const coverageQuality = scoreCoverageQuality(
-          placements,
-          orchard,
-          input
-        );
-
-        const coverageDifferencePercent =
-          Math.abs(actualAreaPerDispenser - targetAreaPerDispenser) /
-          targetAreaPerDispenser;
-
-        const staggerBonus = offset > 0 ? -500 : 0;
-
-        const crewEaseScore =
-          rowInterval * -10 + treeInterval;
-
-        const score =
-          coverageDifferencePercent * 1000 +
-          rateDifference * 100 +
-          coverageQuality.coverageScore +
-          crewEaseScore +
-          staggerBonus;
-
-        candidatePatterns.push({
-          averageNearestDistance: coverageQuality.averageNearestDistance,
-          worstNearestDistance: coverageQuality.worstNearestDistance,
-          coverageScore: coverageQuality.coverageScore,
-          coverageUniformity: coverageQuality.coverageUniformity,
-          rowInterval,
-          treeInterval,
-          offset,
-          placements,
-          count,
-          targetDispensers,
-          resultingRate,
-          actualAreaPerDispenser,
-          coverageDifferencePercent,
-          score
-        });
       }
     }
   }
 
+  candidatePatterns.sort((a, b) => {
+    if (a.coverageScore !== b.coverageScore) {
+      return a.coverageScore - b.coverageScore;
+    }
+
+    const rateDifferenceA =
+      Math.abs(a.count - targetDispensers);
+
+    const rateDifferenceB =
+      Math.abs(b.count - targetDispensers);
+
+    if (rateDifferenceA !== rateDifferenceB) {
+      return rateDifferenceA - rateDifferenceB;
+    }
+
+    if (
+      a.coverageDifferencePercent !==
+      b.coverageDifferencePercent
+    ) {
+      return (
+        a.coverageDifferencePercent -
+        b.coverageDifferencePercent
+      );
+    }
+
+    return a.score - b.score;
+  });
+
   const uniquePatterns = [];
   const seen = new Set();
 
-  candidatePatterns
-    .sort((a, b) => {
-      // 1. Best coverage fit first
-      if (a.coverageDifferencePercent !== b.coverageDifferencePercent) {
-        return a.coverageDifferencePercent - b.coverageDifferencePercent;
-      }
+  candidatePatterns.forEach(pattern => {
+    const key = [
+      pattern.rowInterval,
+      pattern.patternACount,
+      pattern.patternBCount,
+      pattern.patternAPositions.join(","),
+      pattern.patternBPositions.join(","),
+      pattern.count
+    ].join("|");
 
-      // 2. Then closest dispenser count/rate
-      const rateDifferenceA = Math.abs(a.count - targetDispensers);
-      const rateDifferenceB = Math.abs(b.count - targetDispensers);
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniquePatterns.push(pattern);
+    }
+  });
 
-      if (rateDifferenceA !== rateDifferenceB) {
-        return rateDifferenceA - rateDifferenceB;
-      }
-
-      // 3. Prefer staggered layouts if coverage and count are tied
-if (a.offset !== b.offset) {
-  return b.offset - a.offset;
-}
-
-// 4. Then actual spacing quality
-if (a.coverageScore !== b.coverageScore) {
-  return a.coverageScore - b.coverageScore;
-}
-
-      return a.score - b.score;
-    })
-    .forEach(pattern => {
-      const key = `${pattern.rowInterval}-${pattern.treeInterval}-${pattern.offset}-${pattern.count}`;
-
-      if (!seen.has(key)) {
-        seen.add(key);
-        uniquePatterns.push(pattern);
-      }
-    });
-
-  const bestPattern = uniquePatterns[0];
-
-const preferredPatterns = uniquePatterns.filter(pattern => {
-  if (pattern === bestPattern) return true;
-  return pattern.offset > 0;
-});
-
-// The rate as it is displayed to the grower.
-const selectedDisplayedRate = Math.round(input.targetRate);
-
-// Patterns 1 and 2 are always the two best normally ranked patterns.
-const selectedPatterns = preferredPatterns.slice(0, 2);
-
-// Check whether Pattern 1 or Pattern 2 already displays
-// the grower's selected rate.
-const targetRateAlreadyShown = selectedPatterns.some(pattern =>
-  Math.round(pattern.resultingRate) === selectedDisplayedRate
-);
-
-if (targetRateAlreadyShown) {
-  // The selected rate is already represented,
-  // so Pattern 3 remains the next-best normal choice.
-  const normalThirdPattern = preferredPatterns.find(
-    pattern => !selectedPatterns.includes(pattern)
-  );
-
-  if (normalThirdPattern) {
-    selectedPatterns.push(normalThirdPattern);
+  if (!uniquePatterns.length) {
+    return {
+      orchard,
+      patterns: []
+    };
   }
-} else {
-  // The selected rate is missing from Patterns 1 and 2,
-  // so find the best selected-rate pattern for Pattern 3.
-  const selectedRatePattern = preferredPatterns.find(pattern =>
-    !selectedPatterns.includes(pattern) &&
-    Math.round(pattern.resultingRate) === selectedDisplayedRate
-  );
 
-  if (selectedRatePattern) {
-    selectedPatterns.push(selectedRatePattern);
-  } else {
-    // Search all qualifying patterns in case the selected-rate
-    // pattern was removed by the staggered-pattern preference.
-    const fallbackSelectedRatePattern = uniquePatterns.find(pattern =>
-      !selectedPatterns.includes(pattern) &&
-      Math.round(pattern.resultingRate) === selectedDisplayedRate
+  const selectedPatterns =
+    uniquePatterns.slice(0, 2);
+
+  const selectedDisplayedRate =
+    Math.round(input.targetRate);
+
+  const selectedRateAlreadyShown =
+    selectedPatterns.some(pattern =>
+      Math.round(pattern.resultingRate) ===
+      selectedDisplayedRate
     );
 
-    if (fallbackSelectedRatePattern) {
-      selectedPatterns.push(fallbackSelectedRatePattern);
-    } else {
-      // Final fallback so the app still displays three choices.
-      const normalThirdPattern = preferredPatterns.find(
-        pattern => !selectedPatterns.includes(pattern)
+  if (selectedRateAlreadyShown) {
+    const normalThirdPattern =
+      uniquePatterns.find(pattern =>
+        !selectedPatterns.includes(pattern)
       );
+
+    if (normalThirdPattern) {
+      selectedPatterns.push(normalThirdPattern);
+    }
+  } else {
+    const selectedRatePattern =
+      uniquePatterns.find(pattern =>
+        !selectedPatterns.includes(pattern) &&
+        Math.round(pattern.resultingRate) ===
+          selectedDisplayedRate
+      );
+
+    if (selectedRatePattern) {
+      selectedPatterns.push(selectedRatePattern);
+    } else {
+      const normalThirdPattern =
+        uniquePatterns.find(pattern =>
+          !selectedPatterns.includes(pattern)
+        );
 
       if (normalThirdPattern) {
         selectedPatterns.push(normalThirdPattern);
       }
     }
   }
-}
 
-return {
-  orchard,
-  patterns: selectedPatterns
-};
+  return {
+    orchard,
+    patterns: selectedPatterns
+  };
 }
-
 function generatePlans() {
   
 
@@ -755,11 +912,22 @@ function renderOptions(plans) {
   });
 }
 
+edge.`;
 function describePattern(plan) {
   const rowText =
     plan.rowInterval === 1
       ? "every row"
       : `every ${ordinal(plan.rowInterval)} row`;
+
+  if (plan.patternType === "alternating-ab") {
+    const patternATrees =
+      plan.patternAPositions.join(", ");
+
+    const patternBTrees =
+      plan.patternBPositions.join(", ");
+
+    return `Treat ${rowText}. Use Pattern A on the first treated row and Pattern B on the second treated row. Continue alternating A, B, A, B through the block. Pattern A trees: ${patternATrees}. Pattern B trees: ${patternBTrees}. Count trees from the selected highest-pressure edge.`;
+  }
 
   const treeText =
     plan.treeInterval === 1
