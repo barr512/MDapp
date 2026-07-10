@@ -388,8 +388,8 @@ const targetDispensers = inventoryIsLimited
         const rateDifference = Math.abs(count - targetDispensers);
         const percentOffTarget = rateDifference / targetDispensers;
 
-        // Normal label-rate mode allows up to 10% off target.
-        if (!inventoryIsLimited && percentOffTarget > 0.10) continue;
+        // Normal label-rate mode allows no more than 3% above or below target.
+if (!inventoryIsLimited && percentOffTarget > 0.03) continue;
 
         // Limited inventory mode allows lower repeatable patterns,
         // because leftovers can be placed on the highest-risk border.
@@ -484,17 +484,70 @@ if (a.coverageScore !== b.coverageScore) {
 
   const bestPattern = uniquePatterns[0];
 
-  const preferredPatterns = uniquePatterns.filter(pattern => {
-    if (pattern === bestPattern) return true;
-    return pattern.offset > 0;
-  });
+const preferredPatterns = uniquePatterns.filter(pattern => {
+  if (pattern === bestPattern) return true;
+  return pattern.offset > 0;
+});
 
-  return {
-    orchard,
-    patterns: preferredPatterns.slice(0, 3)
-  };
+// The rate as it is displayed to the grower.
+const selectedDisplayedRate = Math.round(input.targetRate);
+
+// Patterns 1 and 2 are always the two best normally ranked patterns.
+const selectedPatterns = preferredPatterns.slice(0, 2);
+
+// Check whether Pattern 1 or Pattern 2 already displays
+// the grower's selected rate.
+const targetRateAlreadyShown = selectedPatterns.some(pattern =>
+  Math.round(pattern.resultingRate) === selectedDisplayedRate
+);
+
+if (targetRateAlreadyShown) {
+  // The selected rate is already represented,
+  // so Pattern 3 remains the next-best normal choice.
+  const normalThirdPattern = preferredPatterns.find(
+    pattern => !selectedPatterns.includes(pattern)
+  );
+
+  if (normalThirdPattern) {
+    selectedPatterns.push(normalThirdPattern);
+  }
+} else {
+  // The selected rate is missing from Patterns 1 and 2,
+  // so find the best selected-rate pattern for Pattern 3.
+  const selectedRatePattern = preferredPatterns.find(pattern =>
+    !selectedPatterns.includes(pattern) &&
+    Math.round(pattern.resultingRate) === selectedDisplayedRate
+  );
+
+  if (selectedRatePattern) {
+    selectedPatterns.push(selectedRatePattern);
+  } else {
+    // Search all qualifying patterns in case the selected-rate
+    // pattern was removed by the staggered-pattern preference.
+    const fallbackSelectedRatePattern = uniquePatterns.find(pattern =>
+      !selectedPatterns.includes(pattern) &&
+      Math.round(pattern.resultingRate) === selectedDisplayedRate
+    );
+
+    if (fallbackSelectedRatePattern) {
+      selectedPatterns.push(fallbackSelectedRatePattern);
+    } else {
+      // Final fallback so the app still displays three choices.
+      const normalThirdPattern = preferredPatterns.find(
+        pattern => !selectedPatterns.includes(pattern)
+      );
+
+      if (normalThirdPattern) {
+        selectedPatterns.push(normalThirdPattern);
+      }
+    }
+  }
 }
 
+return {
+  orchard,
+  patterns: selectedPatterns
+};
 function generatePlans() {
   
 
