@@ -846,6 +846,256 @@ function scoreCoverageQuality(
     passesSpacingAudit
   };
 }
+function auditAssignedCoverageArea(
+  placements,
+  orchard,
+  input
+) {
+  if (
+    !placements.length ||
+    !orchard.trees.length
+  ) {
+    return {
+      passesAssignedAreaAudit: false,
+      assignedAreaScore: Infinity,
+      assignedAreaSpread: Infinity,
+      assignedAreaVariation: Infinity,
+      minimumAssignedArea: 0,
+      maximumAssignedArea: Infinity
+    };
+  }
+
+  /*
+    Each orchard tree represents approximately this
+    amount of physical orchard area.
+  */
+  const areaPerTree =
+    input.rowSpacing *
+    input.treeSpacing;
+
+  const targetAreaPerDispenser =
+    43560 /
+    input.targetRate;
+
+  /*
+    Count how many orchard tree cells are closest
+    to each dispenser.
+  */
+  const assignedTreeCounts =
+    Array(
+      placements.length
+    ).fill(0);
+
+  orchard.trees.forEach(tree => {
+    let closestPlacementIndex = -1;
+    let closestDistanceSquared =
+      Infinity;
+
+    placements.forEach(
+      (placement, placementIndex) => {
+        const rowDistance =
+          (
+            tree.row -
+            placement.row
+          ) *
+          input.rowSpacing;
+
+        const treeDistance =
+          (
+            tree.tree -
+            placement.tree
+          ) *
+          input.treeSpacing;
+
+        const distanceSquared =
+          rowDistance ** 2 +
+          treeDistance ** 2;
+
+        if (
+          distanceSquared <
+          closestDistanceSquared
+        ) {
+          closestDistanceSquared =
+            distanceSquared;
+
+          closestPlacementIndex =
+            placementIndex;
+        }
+      }
+    );
+
+    if (
+      closestPlacementIndex >= 0
+    ) {
+      assignedTreeCounts[
+        closestPlacementIndex
+      ]++;
+    }
+  });
+
+  /*
+    Convert assigned tree cells into estimated
+    assigned orchard area for each dispenser.
+  */
+  const assignedAreas =
+    assignedTreeCounts
+      .map(
+        count =>
+          count *
+          areaPerTree
+      )
+      .sort(
+        (a, b) => a - b
+      );
+
+  const averageAssignedArea =
+    assignedAreas.reduce(
+      (total, area) =>
+        total + area,
+      0
+    ) /
+    assignedAreas.length;
+
+  const minimumAssignedArea =
+    assignedAreas[0];
+
+  const maximumAssignedArea =
+    assignedAreas[
+      assignedAreas.length - 1
+    ];
+
+  const percentile10 =
+    assignedAreas[
+      Math.min(
+        assignedAreas.length - 1,
+        Math.floor(
+          assignedAreas.length *
+          0.10
+        )
+      )
+    ];
+
+  const percentile90 =
+    assignedAreas[
+      Math.min(
+        assignedAreas.length - 1,
+        Math.floor(
+          assignedAreas.length *
+          0.90
+        )
+      )
+    ];
+
+  const assignedAreaVariance =
+    assignedAreas.reduce(
+      (total, area) =>
+        total +
+        (
+          area -
+          averageAssignedArea
+        ) ** 2,
+      0
+    ) /
+    assignedAreas.length;
+
+  const assignedAreaStandardDeviation =
+    Math.sqrt(
+      assignedAreaVariance
+    );
+
+  /*
+    Coefficient of variation measures unevenness
+    without depending on the selected rate.
+  */
+  const assignedAreaVariation =
+    averageAssignedArea > 0
+      ? assignedAreaStandardDeviation /
+        averageAssignedArea
+      : Infinity;
+
+  /*
+    Compare the larger assigned areas with the
+    smaller assigned areas.
+
+    Large values indicate dense and sparse bands.
+  */
+  const assignedAreaSpread =
+    percentile10 > 0
+      ? percentile90 /
+        percentile10
+      : Infinity;
+
+  /*
+    Measure each dispenser's difference from the
+    target area per dispenser.
+  */
+  const assignedAreaScore =
+    assignedAreas.reduce(
+      (total, area) =>
+        total +
+        Math.abs(
+          area -
+          targetAreaPerDispenser
+        ) /
+        targetAreaPerDispenser,
+      0
+    ) /
+    assignedAreas.length;
+
+  /*
+    Whole-block acceptance limits.
+
+    Most dispensers should serve a similar amount
+    of orchard area. A few border dispensers may
+    naturally receive less area, so percentiles are
+    used instead of requiring every dispenser to be
+    identical.
+  */
+  const minimumAllowed10thPercentile =
+    targetAreaPerDispenser * 0.55;
+
+  const maximumAllowed90thPercentile =
+    targetAreaPerDispenser * 1.45;
+
+  const maximumAllowedAssignedAreaSpread =
+    2.0;
+
+  const maximumAllowedVariation =
+    0.32;
+
+  const maximumAllowedAssignedAreaScore =
+    0.30;
+
+  const passesAssignedAreaAudit =
+    percentile10 >=
+      minimumAllowed10thPercentile &&
+
+    percentile90 <=
+      maximumAllowed90thPercentile &&
+
+    assignedAreaSpread <=
+      maximumAllowedAssignedAreaSpread &&
+
+    assignedAreaVariation <=
+      maximumAllowedVariation &&
+
+    assignedAreaScore <=
+      maximumAllowedAssignedAreaScore;
+
+  return {
+    passesAssignedAreaAudit,
+    assignedAreaScore,
+    assignedAreaSpread,
+    assignedAreaVariation,
+    minimumAssignedArea,
+    maximumAssignedArea,
+    percentile10AssignedArea:
+      percentile10,
+    percentile90AssignedArea:
+      percentile90,
+    averageAssignedArea
+  };
+}
 function buildRepeatingTreePattern(
   treesPerRow,
   interval,
@@ -1269,12 +1519,23 @@ if (
     input
   );
 
+const assignedAreaAudit =
+  auditAssignedCoverageArea(
+    placements,
+    orchard,
+    input
+  );
+
 /*
-  Reject the completed layout before it can be ranked
-  or displayed when it fails the whole-block spacing audit.
+  The completed layout must pass both checks:
+
+  1. Physical gap and cluster spacing.
+  2. Similar orchard area assigned to each dispenser.
 */
 if (
-  !coverageQuality.passesSpacingAudit
+  !coverageQuality.passesSpacingAudit ||
+  !assignedAreaAudit
+    .passesAssignedAreaAudit
 ) {
   continue;
 }
@@ -1311,9 +1572,13 @@ const actualAreaPerDispenser =
               countDifference * 25 +
               rowInterval * 5;
 
-          const score =
+         const score =
   rateDifference * 300 +
   coverageQuality.coverageScore +
+  assignedAreaAudit.assignedAreaScore *
+    1000 +
+  assignedAreaAudit.assignedAreaVariation *
+    750 +
   coverageDifferencePercent * 500 +
   crewEaseScore;
 
