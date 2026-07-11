@@ -1859,18 +1859,77 @@ const bandingAudit =
     input
   );
 
+const expectedSpacing =
+  Math.sqrt(
+    SQFT_PER_ACRE /
+    input.targetRate
+  );
+
 /*
-  The finished layout must pass both audits.
+  Strict audit for fully optimized patterns.
+*/
+const passesOptimizedAudit =
+  coverageQuality.passesSpacingAudit &&
+  bandingAudit.passesBandingAudit;
 
-  The coverage audit checks distances, gaps and clusters.
+/*
+  Broader audit for "Closest Practical Patterns."
 
-  The banding audit scans consecutive physical sections
-  of the complete block and rejects repeated dense and
-  sparse strips.
+  These patterns may be somewhat less uniform than a
+  fully optimized layout, but visibly severe clusters,
+  open bands and large gaps are still rejected.
+*/
+const passesPracticalAudit =
+  coverageQuality.closestDispenserDistance >=
+    expectedSpacing * 0.35 &&
+
+  coverageQuality.percentile95 <=
+    expectedSpacing * 0.95 &&
+
+  coverageQuality.worstNearestDistance <=
+    expectedSpacing * 1.20 &&
+
+  coverageQuality.neighborDistanceSpread <=
+    1.80 &&
+
+  coverageQuality.localDensitySpread <=
+    4 &&
+
+  coverageQuality.clusterPenalty <=
+    0.16 &&
+
+  coverageQuality.gapPenalty <=
+    0.16 &&
+
+  bandingAudit.alongRowVariation <=
+    0.52 &&
+
+  bandingAudit.acrossRowVariation <=
+    0.52 &&
+
+  bandingAudit.alongRowMaximumAdjacentChange <=
+    1.50 &&
+
+  bandingAudit.acrossRowMaximumAdjacentChange <=
+    1.50;
+
+/*
+  Normal search requires a fully optimized pattern.
+
+  The closest-pattern search uses the broader practical
+  audit, but does not permit completely unrestricted
+  layouts.
 */
 if (
-  !coverageQuality.passesSpacingAudit ||
-  !bandingAudit.passesBandingAudit
+  !showClosest &&
+  !passesOptimizedAudit
+) {
+  continue;
+}
+
+if (
+  showClosest &&
+  !passesPracticalAudit
 ) {
   continue;
 }
