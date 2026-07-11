@@ -260,6 +260,8 @@ function scoreCoverageQuality(
       percentile95: Infinity,
       distanceSpread: Infinity,
       closestDispenserDistance: 0,
+      neighborDistanceSpread: Infinity,
+      localDensitySpread: Infinity,
       clusterPenalty: Infinity,
       gapPenalty: Infinity,
       coverageScore: Infinity,
@@ -268,19 +270,10 @@ function scoreCoverageQuality(
     };
   }
 
-  /*
-    Store dispenser positions by orchard row.
-
-    This allows the engine to survey the completed
-    whole-block layout instead of judging only the
-    interval recipe.
-  */
   const placementsByRow = new Map();
 
   placements.forEach(place => {
-    if (
-      !placementsByRow.has(place.row)
-    ) {
+    if (!placementsByRow.has(place.row)) {
       placementsByRow.set(
         place.row,
         []
@@ -304,10 +297,6 @@ function scoreCoverageQuality(
     ...placementsByRow.keys()
   ].sort((a, b) => a - b);
 
-  /*
-    Find the closest dispenser position within
-    one orchard row.
-  */
   function nearestTreeDistance(
     sortedTreePositions,
     targetTree,
@@ -374,10 +363,47 @@ function scoreCoverageQuality(
   }
 
   /*
-    Survey every orchard tree and measure its
-    physical distance to the nearest dispenser.
+    Convert an orchard row/tree position into
+    physical block coordinates.
+  */
+  function getPhysicalPosition(position) {
+    return {
+      x:
+        (position.row - 1) *
+        input.rowSpacing,
 
-    This exposes open areas anywhere in the block.
+      y:
+        (position.tree - 1) *
+        input.treeSpacing
+    };
+  }
+
+  function physicalDistanceBetween(
+    first,
+    second
+  ) {
+    const firstPosition =
+      getPhysicalPosition(first);
+
+    const secondPosition =
+      getPhysicalPosition(second);
+
+    const xDifference =
+      firstPosition.x -
+      secondPosition.x;
+
+    const yDifference =
+      firstPosition.y -
+      secondPosition.y;
+
+    return Math.sqrt(
+      xDifference ** 2 +
+      yDifference ** 2
+    );
+  }
+
+  /*
+    Survey every orchard tree for open coverage areas.
   */
   const nearestCoverageDistances =
     [];
@@ -454,15 +480,13 @@ function scoreCoverageQuality(
 
   const worstNearestDistance =
     nearestCoverageDistances[
-      nearestCoverageDistances.length -
-      1
+      nearestCoverageDistances.length - 1
     ];
 
   const percentile90 =
     nearestCoverageDistances[
       Math.min(
-        nearestCoverageDistances.length -
-          1,
+        nearestCoverageDistances.length - 1,
         Math.floor(
           nearestCoverageDistances.length *
           0.90
@@ -473,8 +497,7 @@ function scoreCoverageQuality(
   const percentile95 =
     nearestCoverageDistances[
       Math.min(
-        nearestCoverageDistances.length -
-          1,
+        nearestCoverageDistances.length - 1,
         Math.floor(
           nearestCoverageDistances.length *
           0.95
@@ -499,9 +522,6 @@ function scoreCoverageQuality(
       distanceVariance
     );
 
-  /*
-    Expected physical spacing for the selected rate.
-  */
   const expectedSpacing =
     Math.sqrt(
       43560 /
@@ -534,107 +554,198 @@ function scoreCoverageQuality(
     nearestCoverageDistances.length;
 
   /*
-    Survey every dispenser and measure its physical
-    distance to the nearest other dispenser.
+    Survey the completed dispenser layout.
 
-    This exposes clusters anywhere in the block.
+    For each dispenser, record:
+    1. Distance to its nearest neighbor.
+    2. Number of nearby dispensers inside a fixed
+       physical radius.
+
+    This detects repeating dense and sparse bands,
+    even when every orchard tree remains reasonably
+    close to some dispenser.
   */
+  const nearestNeighborDistances = [];
+  const localNeighborCounts = [];
+
+  const localDensityRadius =
+    expectedSpacing * 1.35;
+
+  placements.forEach(
+    (place, placeIndex) => {
+      let nearestOtherDispenser =
+        Infinity;
+
+      let nearbyDispenserCount = 0;
+
+      placements.forEach(
+        (otherPlace, otherIndex) => {
+          if (
+            placeIndex === otherIndex
+          ) {
+            return;
+          }
+
+          const distance =
+            physicalDistanceBetween(
+              place,
+              otherPlace
+            );
+
+          nearestOtherDispenser =
+            Math.min(
+              nearestOtherDispenser,
+              distance
+            );
+
+          if (
+            distance <=
+            localDensityRadius
+          ) {
+            nearbyDispenserCount++;
+          }
+        }
+      );
+
+      nearestNeighborDistances.push(
+        nearestOtherDispenser
+      );
+
+      localNeighborCounts.push(
+        nearbyDispenserCount
+      );
+    }
+  );
+
+  nearestNeighborDistances.sort(
+    (a, b) => a - b
+  );
+
+  localNeighborCounts.sort(
+    (a, b) => a - b
+  );
+
+  const closestDispenserDistance =
+    nearestNeighborDistances[0];
+
+  const neighborDistance10 =
+    nearestNeighborDistances[
+      Math.min(
+        nearestNeighborDistances.length - 1,
+        Math.floor(
+          nearestNeighborDistances.length *
+          0.10
+        )
+      )
+    ];
+
+  const neighborDistance50 =
+    nearestNeighborDistances[
+      Math.min(
+        nearestNeighborDistances.length - 1,
+        Math.floor(
+          nearestNeighborDistances.length *
+          0.50
+        )
+      )
+    ];
+
+  const neighborDistance90 =
+    nearestNeighborDistances[
+      Math.min(
+        nearestNeighborDistances.length - 1,
+        Math.floor(
+          nearestNeighborDistances.length *
+          0.90
+        )
+      )
+    ];
+
+  /*
+    A large difference between the lower and upper
+    neighbor-distance percentiles means that some
+    dispensers are bunched while others are isolated.
+  */
+  const neighborDistanceSpread =
+    neighborDistance10 > 0
+      ? neighborDistance90 /
+        neighborDistance10
+      : Infinity;
+
+  const localDensity10 =
+    localNeighborCounts[
+      Math.min(
+        localNeighborCounts.length - 1,
+        Math.floor(
+          localNeighborCounts.length *
+          0.10
+        )
+      )
+    ];
+
+  const localDensity50 =
+    localNeighborCounts[
+      Math.min(
+        localNeighborCounts.length - 1,
+        Math.floor(
+          localNeighborCounts.length *
+          0.50
+        )
+      )
+    ];
+
+  const localDensity90 =
+    localNeighborCounts[
+      Math.min(
+        localNeighborCounts.length - 1,
+        Math.floor(
+          localNeighborCounts.length *
+          0.90
+        )
+      )
+    ];
+
+  /*
+    This measures how much nearby dispenser density
+    changes across the completed block.
+  */
+  const localDensitySpread =
+    localDensity90 -
+    localDensity10;
+
   const minimumPreferredDispenserDistance =
     expectedSpacing * 0.55;
 
   let clusterPenalty = 0;
-  let closestDispenserDistance =
-    Infinity;
 
-  placements.forEach(place => {
-    let nearestOtherDispenser =
-      Infinity;
-
-    treatedRowNumbers.forEach(
-      dispenserRow => {
-        const rowDistance =
-          Math.abs(
-            place.row -
-            dispenserRow
-          ) *
-          input.rowSpacing;
-
-        if (
-          rowDistance >
-          nearestOtherDispenser
-        ) {
-          return;
-        }
-
-        const treeDifference =
-          nearestTreeDistance(
-            placementsByRow.get(
-              dispenserRow
-            ),
-            place.tree,
-            dispenserRow === place.row
-          );
-
-        if (
-          !Number.isFinite(
-            treeDifference
-          )
-        ) {
-          return;
-        }
-
-        const distanceAlongRow =
-          treeDifference *
-          input.treeSpacing;
-
-        const physicalDistance =
-          Math.sqrt(
-            rowDistance ** 2 +
-            distanceAlongRow ** 2
-          );
-
-        nearestOtherDispenser =
-          Math.min(
-            nearestOtherDispenser,
-            physicalDistance
-          );
+  nearestNeighborDistances.forEach(
+    distance => {
+      if (
+        distance <
+        minimumPreferredDispenserDistance
+      ) {
+        clusterPenalty +=
+          (
+            minimumPreferredDispenserDistance -
+            distance
+          ) /
+          expectedSpacing;
       }
-    );
-
-    closestDispenserDistance =
-      Math.min(
-        closestDispenserDistance,
-        nearestOtherDispenser
-      );
-
-    if (
-      nearestOtherDispenser <
-      minimumPreferredDispenserDistance
-    ) {
-      clusterPenalty +=
-        (
-          minimumPreferredDispenserDistance -
-          nearestOtherDispenser
-        ) /
-        expectedSpacing;
     }
-  });
+  );
 
   clusterPenalty =
     clusterPenalty /
-    placements.length;
+    nearestNeighborDistances.length;
 
-  /*
-    Score surviving patterns.
-
-    Lower is better.
-  */
   const coverageScore =
     averageNearestDistance +
     percentile90 * 1.5 +
     percentile95 * 2 +
     worstNearestDistance * 2.5 +
     distanceSpread * 2 +
+    neighborDistanceSpread * 100 +
+    localDensitySpread * 75 +
     gapPenalty * 300 +
     clusterPenalty * 400;
 
@@ -650,13 +761,10 @@ function scoreCoverageQuality(
     );
 
   /*
-    Final whole-block spacing audit.
+    Final whole-block acceptance audit.
 
-    The engine surveys the completed placement,
-    regardless of which intervals or starts created it.
-
-    A pattern must pass all of these limits before
-    it can be accepted and ranked.
+    These checks evaluate the finished placement,
+    not the A/B interval instructions.
   */
   const minimumAllowedNeighborDistance =
     expectedSpacing * 0.45;
@@ -673,9 +781,36 @@ function scoreCoverageQuality(
   const maximumAllowedGapPenalty =
     0.08;
 
+  /*
+    Repeated dense/sparse bands produce a large
+    neighbor-distance or local-density spread.
+  */
+  const maximumAllowedNeighborSpread =
+    1.45;
+
+  const maximumAllowedLocalDensitySpread =
+    2;
+
+  /*
+    Do not allow most dispensers to be substantially
+    closer together than expected merely because
+    other areas contain larger gaps.
+  */
+  const minimumAllowedMedianNeighborDistance =
+    expectedSpacing * 0.60;
+
   const passesSpacingAudit =
     closestDispenserDistance >=
       minimumAllowedNeighborDistance &&
+
+    neighborDistance50 >=
+      minimumAllowedMedianNeighborDistance &&
+
+    neighborDistanceSpread <=
+      maximumAllowedNeighborSpread &&
+
+    localDensitySpread <=
+      maximumAllowedLocalDensitySpread &&
 
     percentile95 <=
       maximumAllowed95thDistance &&
@@ -696,6 +831,14 @@ function scoreCoverageQuality(
     percentile95,
     distanceSpread,
     closestDispenserDistance,
+    neighborDistance10,
+    neighborDistance50,
+    neighborDistance90,
+    neighborDistanceSpread,
+    localDensity10,
+    localDensity50,
+    localDensity90,
+    localDensitySpread,
     clusterPenalty,
     gapPenalty,
     coverageScore,
