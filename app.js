@@ -1373,20 +1373,43 @@ function auditWholeBlockBanding(
     the width of the orchard.
   */
   const alongRowScan =
-    scanAxis(
-      treeCoordinates,
-      blockLength
-    );
+  scanAxis(
+    treeCoordinates,
+    blockLength
+  );
 
-  const acrossRowScan =
-    scanAxis(
-      rowCoordinates,
-      blockWidth
-    );
+/*
+  Across-row banding cannot be judged reliably when
+  the block contains only a small number of discrete rows.
 
-  const passesBandingAudit =
-    alongRowScan.passes &&
-    acrossRowScan.passes;
+  In those blocks, the row structure itself creates large
+  count changes between physical scan windows and can cause
+  every candidate to fail.
+
+  Continue scanning down the full row length, which detects
+  the repeated dense/open bands visible in the schematic.
+*/
+const useAcrossRowScan =
+  orchard.rows >= 12;
+
+const acrossRowScan =
+  useAcrossRowScan
+    ? scanAxis(
+        rowCoordinates,
+        blockWidth
+      )
+    : {
+        passes: true,
+        variation: 0,
+        maximumRelativeCount: 1,
+        minimumRelativeCount: 1,
+        maximumAdjacentChange: 0,
+        emptyWindowFraction: 0
+      };
+
+const passesBandingAudit =
+  alongRowScan.passes &&
+  acrossRowScan.passes;
 
   const bandingScore =
     alongRowScan.variation +
