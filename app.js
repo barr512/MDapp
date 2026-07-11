@@ -1056,19 +1056,14 @@ function getBestPatterns(input, showClosest = false) {
         const patternBInterval
         of intervalCandidates
       ) {
-        const searchAllStarts =
-  input.usingCustomProductRate === true;
-
-const patternAStartOptions =
+        const patternAStartOptions =
   getSimpleStartOptions(
-    patternAInterval,
-    searchAllStarts
+    patternAInterval
   );
 
 const patternBStartOptions =
   getSimpleStartOptions(
-    patternBInterval,
-    searchAllStarts
+    patternBInterval
   );
 
         for (
