@@ -3316,7 +3316,12 @@ const bandingAudit =
     orchard,
     input
   );
-
+const assignedAreaAudit =
+  auditAssignedCoverageArea(
+    placements,
+    orchard,
+    input
+  );
 const expectedSpacing =
   Math.sqrt(
     SQFT_PER_ACRE /
@@ -3328,7 +3333,8 @@ const expectedSpacing =
 */
 const passesOptimizedAudit =
   coverageQuality.passesSpacingAudit &&
-  bandingAudit.passesBandingAudit;
+  bandingAudit.passesBandingAudit &&
+  assignedAreaAudit.passesAssignedAreaAudit;
 
 /*
   Broader audit for "Closest Practical Patterns."
