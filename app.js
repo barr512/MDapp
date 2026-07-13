@@ -3941,8 +3941,127 @@ return simplicityA - simplicityB;
   This uses the same layout and display path as the
   tested mathematical demo.
 */
-function generatePlans() {
-  showIdealLayoutDemo();
+/*
+  Generate repeatable deployment plans.
+
+  The mathematical layout remains available as a
+  development benchmark, but the grower-facing plan
+  must come from the staggered repeatable-pattern engine.
+*/
+function generatePlans(showClosest = false) {
+  const input = getInputs();
+
+  if (
+    !Number.isFinite(input.acres) ||
+    input.acres <= 0 ||
+
+    !Number.isFinite(input.rows) ||
+    input.rows <= 0 ||
+
+    !Number.isFinite(input.rowSpacing) ||
+    input.rowSpacing <= 0 ||
+
+    !Number.isFinite(input.treeSpacing) ||
+    input.treeSpacing <= 0 ||
+
+    !Number.isFinite(input.targetRate) ||
+    input.targetRate <= 0
+  ) {
+    alert(
+      "Please enter acreage, number of rows, row spacing, tree spacing, and dispenser rate before generating plans."
+    );
+
+    return;
+  }
+
+  if (
+    input.selectedProduct &&
+    (
+      input.targetRate <
+        input.selectedProduct.min ||
+
+      input.targetRate >
+        input.selectedProduct.max
+    )
+  ) {
+    alert(
+      `Enter a rate between ` +
+      `${input.selectedProduct.min} and ` +
+      `${input.selectedProduct.max} per acre for ` +
+      `${input.selectedProduct.name}.`
+    );
+
+    return;
+  }
+
+  input.labelTargetDispensers =
+    Math.round(
+      input.acres *
+      input.targetRate
+    );
+
+  input.inventoryIsLimited =
+    Boolean(
+      input.availableDispensers &&
+      input.availableDispensers <
+        input.labelTargetDispensers
+    );
+
+  /*
+    The grower cannot be expected to have more than
+    the entered-rate quantity unless a larger inventory
+    was specifically entered.
+  */
+  input.targetDispensers =
+    input.inventoryIsLimited
+      ? input.availableDispensers
+      : input.labelTargetDispensers;
+
+  const engineResults =
+    getBestPatterns(
+      input,
+      showClosest
+    );
+
+  input.showingClosestPatterns =
+    showClosest;
+
+  input.targetAreaPerDispenser =
+    43560 /
+    input.targetRate;
+
+  input.estimatedRowLength =
+    engineResults.orchard.rowLength;
+
+  input.treesPerRow =
+    engineResults.orchard.treesPerRow;
+
+  currentInput = input;
+
+  currentPlans =
+    engineResults.patterns.map(
+      pattern =>
+        convertEnginePatternToUiPlan(
+          pattern,
+          engineResults.orchard,
+          input
+        )
+    );
+
+  assignPatternBadges(
+    currentPlans
+  );
+
+  renderSummary(
+    input,
+    engineResults.orchard.trees.length
+  );
+
+  renderOptions(
+    currentPlans
+  );
+
+  showOptionsScreen();
 }
 
 /*
