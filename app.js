@@ -1730,7 +1730,203 @@ function physicalPlacementDistance(
     alongRowsFeet ** 2
   );
 }
+/*
+  Choose a simple, repeatable set of deployment rows.
 
+  Every selected deployment row uses the same row
+  interval. This prevents a single unexplained extra
+  row skip from appearing in the middle of the block.
+
+  The exact dispenser total is handled separately by
+  distributeCountAcrossLines(), so simplifying the row
+  sequence does not change the target count.
+*/
+function findBestRepeatingDeploymentRows(
+  lineCount,
+  totalRows,
+  spacingAcrossBlock,
+  rowSpacing
+) {
+  let bestDesign = null;
+
+  /*
+    The mathematically preferred distance between
+    deployment rows, expressed in orchard rows.
+  */
+  const idealRowInterval =
+    spacingAcrossBlock /
+    rowSpacing;
+
+  /*
+    Test intervals close to the mathematical ideal.
+  */
+  const minimumInterval =
+    Math.max(
+      1,
+      Math.floor(
+        idealRowInterval
+      ) - 2
+    );
+
+  const maximumInterval =
+    Math.max(
+      minimumInterval,
+      Math.ceil(
+        idealRowInterval
+      ) + 2
+    );
+
+  for (
+    let rowInterval =
+      minimumInterval;
+    rowInterval <=
+      maximumInterval;
+    rowInterval++
+  ) {
+    /*
+      Determine the largest starting row that still
+      allows every deployment line to fit.
+    */
+    const maximumStartRow =
+      totalRows -
+      (
+        lineCount - 1
+      ) *
+      rowInterval;
+
+    if (
+      maximumStartRow < 1
+    ) {
+      continue;
+    }
+
+    for (
+      let startRow = 1;
+      startRow <=
+        maximumStartRow;
+      startRow++
+    ) {
+      const rows = [];
+
+      for (
+        let lineIndex = 0;
+        lineIndex < lineCount;
+        lineIndex++
+      ) {
+        rows.push(
+          startRow +
+          lineIndex *
+          rowInterval
+        );
+      }
+
+      /*
+        Compare the repeating row sequence with the
+        ideal mathematical line coordinates.
+      */
+      let totalSnapError = 0;
+
+      for (
+        let lineIndex = 0;
+        lineIndex < lineCount;
+        lineIndex++
+      ) {
+        const idealXFeet =
+          (
+            lineIndex +
+            0.5
+          ) *
+          spacingAcrossBlock;
+
+        const actualXFeet =
+          (
+            rows[lineIndex] -
+            0.5
+          ) *
+          rowSpacing;
+
+        totalSnapError +=
+          Math.abs(
+            actualXFeet -
+            idealXFeet
+          );
+      }
+
+      const averageSnapError =
+        totalSnapError /
+        lineCount;
+
+      /*
+        Keep the deployment lines reasonably centered
+        within the full block.
+
+        This prevents an otherwise good repeating
+        sequence from being crowded against one edge.
+      */
+      const firstLineCenter =
+        (
+          rows[0] -
+          0.5
+        ) *
+        rowSpacing;
+
+      const lastLineCenter =
+        (
+          rows[
+            rows.length - 1
+          ] -
+          0.5
+        ) *
+        rowSpacing;
+
+      const blockWidth =
+        totalRows *
+        rowSpacing;
+
+      const beginningMargin =
+        firstLineCenter;
+
+      const endingMargin =
+        blockWidth -
+        lastLineCenter;
+
+      const edgeBalanceError =
+        Math.abs(
+          beginningMargin -
+          endingMargin
+        );
+
+      const intervalDifference =
+        Math.abs(
+          rowInterval -
+          idealRowInterval
+        );
+
+      const score =
+        averageSnapError +
+        edgeBalanceError * 0.20 +
+        intervalDifference *
+          rowSpacing *
+          0.25;
+
+      if (
+        !bestDesign ||
+        score <
+          bestDesign.score
+      ) {
+        bestDesign = {
+          rows,
+          rowInterval,
+          averageSnapError,
+          edgeBalanceError,
+          score
+        };
+      }
+    }
+  }
+
+  return bestDesign;
+}
 /*
   Build the ideal whole-block deployment.
 
@@ -1846,71 +2042,34 @@ for (
       )
     );
 
-  let totalRowSnapError = 0;
+    /*
+    Select one repeating row interval for the complete
+    deployment-row sequence.
 
-  const snappedRows =
-    [];
-
-  for (
-    let lineIndex = 0;
-    lineIndex < lineCount;
-    lineIndex++
-  ) {
-    const idealXFeet =
-      (
-        lineIndex +
-        0.5
-      ) *
-      spacingAcrossBlock;
-
-    const nearestRow =
-      clampNumber(
-        Math.round(
-          idealXFeet /
-          input.rowSpacing +
-          0.5
-        ),
-        1,
-        input.rows
-      );
-
-    const actualRowXFeet =
-      (
-        nearestRow -
-        0.5
-      ) *
-      input.rowSpacing;
-
-    totalRowSnapError +=
-      Math.abs(
-        actualRowXFeet -
-        idealXFeet
-      );
-
-    snappedRows.push(
-      nearestRow
-    );
-  }
-
-  /*
-    Two mathematical deployment lines cannot snap
-    to the same orchard row.
+    This replaces independent line-by-line rounding,
+    which could create a single extra row skip in the
+    middle of an otherwise regular pattern.
   */
-  const uniqueRowCount =
-    new Set(
-      snappedRows
-    ).size;
+  const repeatingRowDesign =
+    findBestRepeatingDeploymentRows(
+      lineCount,
+      input.rows,
+      spacingAcrossBlock,
+      input.rowSpacing
+    );
 
   if (
-    uniqueRowCount !==
-    lineCount
+    !repeatingRowDesign
   ) {
     continue;
   }
 
+  const snappedRows =
+    repeatingRowDesign.rows;
+
   const averageRowSnapError =
-    totalRowSnapError /
-    lineCount;
+    repeatingRowDesign
+      .averageSnapError;
 
   const normalizedRowSnapError =
     averageRowSnapError /
