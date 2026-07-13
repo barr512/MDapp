@@ -4069,25 +4069,31 @@ function generatePlans(showClosest = false) {
   plan shape already used by the app's cards, map,
   and instruction screens.
 */
-function convertIdealLayoutToUiPlan(
-  idealLayout,
+/*
+  Convert a repeatable A/B engine pattern into the
+  format used by the option cards, map, and field
+  instructions.
+*/
+function convertEnginePatternToUiPlan(
+  pattern,
+  orchard,
   input
 ) {
   const layout = [];
 
   for (
     let rowIndex = 0;
-    rowIndex < input.rows;
+    rowIndex < orchard.rows;
     rowIndex++
   ) {
     layout.push(
       Array(
-        idealLayout.treesPerRow
+        orchard.treesPerRow
       ).fill(false)
     );
   }
 
-  idealLayout.placements.forEach(
+  pattern.placements.forEach(
     placement => {
       layout[
         placement.row - 1
@@ -4097,84 +4103,8 @@ function convertIdealLayoutToUiPlan(
     }
   );
 
-  const actualRate =
-    idealLayout.targetDispensers /
-    input.acres;
-
-  const actualAreaPerDispenser =
-    idealLayout.blockArea /
-    idealLayout.targetDispensers;
-
-  const percentCoverageDifference =
-    Math.abs(
-      actualAreaPerDispenser -
-      input.targetAreaPerDispenser
-    ) /
-    input.targetAreaPerDispenser;
-
-  const firstDeploymentRow =
-    idealLayout.deploymentLines[0];
-
-  const secondDeploymentRow =
-    idealLayout.deploymentLines[1] ||
-    firstDeploymentRow;
-
-  const patternAInterval =
-    Math.max(
-      1,
-      Math.round(
-        firstDeploymentRow.spacingDownLine /
-        input.treeSpacing
-      )
-    );
-
-  const patternBInterval =
-    Math.max(
-      1,
-      Math.round(
-        secondDeploymentRow.spacingDownLine /
-        input.treeSpacing
-      )
-    );
-
-  const patternAStart =
-    firstDeploymentRow.placements.length
-      ? firstDeploymentRow
-          .placements[0]
-          .tree
-      : 1;
-
-  const patternBStart =
-    secondDeploymentRow.placements.length
-      ? secondDeploymentRow
-          .placements[0]
-          .tree
-      : patternAStart;
-
-  const selectedRows =
-    idealLayout.deploymentLines
-      .map(
-        line =>
-          line.orchardRow
-      )
-      .sort(
-        (a, b) => a - b
-      );
-
-  let rowInterval = 1;
-
-  if (
-    selectedRows.length >
-    1
-  ) {
-    rowInterval =
-      selectedRows[1] -
-      selectedRows[0];
-  }
-
   return {
-    patternType:
-      "ideal-repeatable-layout",
+    ...pattern,
 
     label:
       "Optimized Pattern",
@@ -4183,101 +4113,29 @@ function convertIdealLayoutToUiPlan(
 
     layout,
 
-    placements:
-      idealLayout.placements,
-
-    deploymentLines:
-      idealLayout.deploymentLines,
-
-    selectedRows,
-
-    count:
-      idealLayout.targetDispensers,
-
-    targetDispensers:
-      idealLayout.targetDispensers,
-
-    actualRate,
-
-    resultingRate:
-      actualRate,
+    actualRate:
+      pattern.resultingRate,
 
     percentRateDifference:
       Math.abs(
-        idealLayout.targetDispensers -
-        input.labelTargetDispensers
+        pattern.count -
+        pattern.targetDispensers
       ) /
-      input.labelTargetDispensers,
+      pattern.targetDispensers,
 
-    percentCoverageDifference,
-
-    coverageDifferencePercent:
-      percentCoverageDifference,
-
-    actualAreaPerDispenser,
-
-    rowInterval,
-
-    patternAInterval,
-    patternBInterval,
-
-    patternAStart,
-    patternBStart,
-
-    treeInterval:
-      Math.round(
-        (
-          patternAInterval +
-          patternBInterval
-        ) /
-        2
-      ),
-
-    offset: 1,
-
-    lineCount:
-      idealLayout.lineCount,
-
-    spacingAcrossBlock:
-      idealLayout.spacingAcrossBlock,
-
-    averageSpacingDownRows:
-      idealLayout.averageSpacingDownRows,
-
-    expectedSpacing:
-      idealLayout.expectedSpacing,
-
-    averageSnapDistance:
-      idealLayout.averageSnapDistance,
-
-    worstSnapDistance:
-      idealLayout.worstSnapDistance,
-
-    averageNearestNeighborDistance:
-      idealLayout
-        .averageNearestNeighborDistance,
-
-    minimumNearestNeighborDistance:
-      idealLayout
-        .minimumNearestNeighborDistance,
-
-    maximumNearestNeighborDistance:
-      idealLayout
-        .maximumNearestNeighborDistance,
+    percentCoverageDifference:
+      pattern.coverageDifferencePercent,
 
     betweenRowsFeet:
-      rowInterval *
+      pattern.rowInterval *
       input.rowSpacing,
 
     betweenTreesFeet:
-      (
-        (
-          patternAInterval +
-          patternBInterval
-        ) /
-        2
-      ) *
-      input.treeSpacing
+      pattern.treeInterval *
+      input.treeSpacing,
+
+    actualAreaPerDispenser:
+      pattern.actualAreaPerDispenser
   };
 }
 
