@@ -1,4 +1,4 @@
-no const generateBtn = document.getElementById("generateBtn");
+const generateBtn = document.getElementById("generateBtn");
 const summaryEl = document.getElementById("summary");
 const optionsEl = document.getElementById("options");
 const mapSection = document.getElementById("mapSection");
