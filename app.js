@@ -3198,7 +3198,7 @@ function getBestPatterns(
   }
 
   const candidatePatterns = [];
-
+let bestRejectedPattern = null;
   for (
     let rowInterval = 1;
     rowInterval <= Math.min(10, input.rows);
@@ -3587,6 +3587,95 @@ if (
   !showClosest &&
   !passesOptimizedAudit
 ) {
+  const rejectedPattern = {
+    count,
+    resultingRate,
+    percentOffTarget,
+
+    passesSpacingAudit:
+      coverageQuality
+        .passesSpacingAudit,
+
+    passesBandingAudit:
+      bandingAudit
+        .passesBandingAudit,
+
+    passesAssignedAreaAudit:
+      assignedAreaAudit
+        .passesAssignedAreaAudit,
+
+    coverageScore:
+      coverageQuality
+        .coverageScore,
+
+    coverageUniformity:
+      coverageQuality
+        .coverageUniformity,
+
+    closestDispenserDistance:
+      coverageQuality
+        .closestDispenserDistance,
+
+    percentile95:
+      coverageQuality
+        .percentile95,
+
+    worstNearestDistance:
+      coverageQuality
+        .worstNearestDistance,
+
+    neighborDistanceSpread:
+      coverageQuality
+        .neighborDistanceSpread,
+
+    localDensitySpread:
+      coverageQuality
+        .localDensitySpread,
+
+    gapPenalty:
+      coverageQuality
+        .gapPenalty,
+
+    clusterPenalty:
+      coverageQuality
+        .clusterPenalty,
+
+    assignedAreaScore:
+      assignedAreaAudit
+        .assignedAreaScore,
+
+    assignedAreaSpread:
+      assignedAreaAudit
+        .assignedAreaSpread,
+
+    assignedAreaVariation:
+      assignedAreaAudit
+        .assignedAreaVariation,
+
+    bandingScore:
+      bandingAudit
+        .bandingScore
+  };
+
+  /*
+    Keep the rejected candidate closest to the
+    requested dispenser count.
+  */
+  if (
+    !bestRejectedPattern ||
+    Math.abs(
+      rejectedPattern.count -
+      targetDispensers
+    ) <
+    Math.abs(
+      bestRejectedPattern.count -
+      targetDispensers
+    )
+  ) {
+    bestRejectedPattern =
+      rejectedPattern;
+  }
+
   continue;
 }
 
@@ -3960,11 +4049,12 @@ return simplicityA - simplicityB;
   });
 
   if (!uniquePatterns.length) {
-    return {
-      orchard,
-      patterns: []
-    };
-  }
+  return {
+    orchard,
+    patterns: [],
+    bestRejectedPattern
+  };
+}
 
    /*
     Separate acceptable repeatable patterns by their
@@ -4187,9 +4277,10 @@ const higherPatterns =
   );
 
   return {
-    orchard,
-    patterns: selectedPatterns
-  };
+  orchard,
+  patterns: selectedPatterns,
+  bestRejectedPattern
+};
 }
 /*
 
