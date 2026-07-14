@@ -3763,7 +3763,7 @@ const actualAreaPerDispenser =
               coverageUniformity:
                 coverageQuality
                   .coverageUniformity,
-
+idealMatchScore,
               /*
                 Keep these properties because other parts
                 of your app currently expect them.
@@ -3839,7 +3839,28 @@ const actualAreaPerDispenser =
 
     return simplicityA - simplicityB;
   } 
-  /*
+ /*
+  First, prefer the repeatable pattern that most
+  closely matches the ideal mathematical layout.
+
+  Small differences are ignored so that noticeably
+  better coverage or rate can still determine the
+  final recommendation.
+*/
+const idealMatchTolerance = 3; // feet
+
+if (
+  Math.abs(
+    a.idealMatchScore -
+    b.idealMatchScore
+  ) > idealMatchTolerance
+) {
+  return (
+    a.idealMatchScore -
+    b.idealMatchScore
+  );
+}
+    /*
   Normal pattern ranking:
 
   If coverage is similar, prefer the rate closest
