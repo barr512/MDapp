@@ -1408,7 +1408,7 @@ function auditWholeBlockBanding(
   the repeated dense/open bands visible in the schematic.
 */
 const useAcrossRowScan =
-  orchard.rows >= 12;
+  orchard.rows >= 16;
 
 const acrossRowScan =
   useAcrossRowScan
