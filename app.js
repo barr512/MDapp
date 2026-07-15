@@ -3584,29 +3584,31 @@ if (
               continue;
             }
 
-           const coverageQuality =
+const coverageQuality =
   scoreCoverageQuality(
     placements,
     orchard,
-    input
+    evaluationInput
   );
 
 const bandingAudit =
   auditWholeBlockBanding(
     placements,
     orchard,
-    input
+    evaluationInput
   );
+
 const assignedAreaAudit =
   auditAssignedCoverageArea(
     placements,
     orchard,
-    input
+    evaluationInput
   );
+
 const expectedSpacing =
   Math.sqrt(
     SQFT_PER_ACRE /
-    input.targetRate
+    effectiveRate
   );
 
 /*
@@ -3875,13 +3877,17 @@ if (
   */
   const assignedAreaFailures = [];
 
-  const minimumAllowedAssignedArea =
-    targetAreaPerDispenser *
-    0.55;
+ const evaluationTargetAreaPerDispenser =
+  SQFT_PER_ACRE /
+  effectiveRate;
 
-  const maximumAllowedAssignedArea =
-    targetAreaPerDispenser *
-    1.45;
+const minimumAllowedAssignedArea =
+  evaluationTargetAreaPerDispenser *
+  0.55;
+
+const maximumAllowedAssignedArea =
+  evaluationTargetAreaPerDispenser *
+  1.45;
 
   if (
     assignedAreaAudit
@@ -4116,7 +4122,7 @@ if (
 */
 let totalIdealMatchDistance = 0;
 
-idealLayout.placements.forEach(
+evaluationIdealLayout.placements.forEach(
   idealPlacement => {
     let nearestCandidateDistance =
       Infinity;
@@ -4144,9 +4150,9 @@ idealLayout.placements.forEach(
 );
 
 const averageIdealMatchDistance =
-  idealLayout.placements.length
+  evaluationIdealLayout.placements.length
     ? totalIdealMatchDistance /
-      idealLayout.placements.length
+      evaluationIdealLayout.placements.length
     : Infinity;
 
 /*
@@ -4163,7 +4169,7 @@ placements.forEach(
     let nearestIdealDistance =
       Infinity;
 
-    idealLayout.placements.forEach(
+    evaluationIdealLayout.placements.forEach(
       idealPlacement => {
         const distance =
           physicalPlacementDistance(
