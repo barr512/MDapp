@@ -5221,7 +5221,7 @@ function renderOptions(plans) {
     !currentInput ||
     !currentInput.showingClosestPatterns
   ) {
-    optionsEl.innerHTML = `
+        optionsEl.innerHTML = `
       <section class="option-card">
         <strong>
           No fully optimized deployment pattern was found.
@@ -5231,6 +5231,10 @@ function renderOptions(plans) {
           The closest practical alternatives are available
           for review.
         </p>
+
+        ${renderRejectedPatternAudit(
+          currentRejectedPattern
+        )}
 
         <button
           type="button"
