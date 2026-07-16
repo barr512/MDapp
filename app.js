@@ -4647,217 +4647,91 @@ return simplicityA - simplicityB;
     The orchard geometry still determines the row
     interval and total number of treated rows.
   */
- /*
-  Classify patterns according to the whole-number rate
-  displayed to the grower.
+/*
+  The complete candidate list has already been ranked
+  using ideal-layout match, coverage quality, rate
+  closeness, and crew simplicity.
 
-  Example:
-  33.5 per acre is displayed and treated as 34.
+  Preserve that ranking when selecting the three
+  grower-facing patterns instead of forcing exact,
+  lower, and higher rate groups into fixed positions.
 */
+const selectedPatterns =
+  uniquePatterns.slice(
+    0,
+    3
+  );
+
 const requestedDisplayedRate =
   Math.round(
     input.targetRate
   );
 
-const exactPatterns =
-  uniquePatterns.filter(
-    pattern =>
+selectedPatterns.forEach(
+  pattern => {
+    const displayedRate =
       Math.round(
         pattern.resultingRate
-      ) === requestedDisplayedRate
-  );
+      );
 
-const lowerPatterns =
-  uniquePatterns.filter(
-    pattern =>
-      Math.round(
-        pattern.resultingRate
-      ) < requestedDisplayedRate
-  );
-
-const higherPatterns =
-  uniquePatterns.filter(
-    pattern =>
-      Math.round(
-        pattern.resultingRate
-      ) > requestedDisplayedRate
-  );
-
-  /*
-    For reduced-count patterns, first prefer the
-    quantity closest to the purchased amount.
-
-    Coverage quality and repeatability have already
-    been used to rank patterns within the engine.
-  */
-  lowerPatterns.sort(
-    (a, b) => {
-      const countDifference =
-        b.count - a.count;
-
-      if (
-        countDifference !== 0
-      ) {
-        return countDifference;
-      }
-
-      return a.score - b.score;
-    }
-  );
-
-  /*
-    Higher-density patterns remain available, but
-    prefer the one requiring the fewest additional
-    dispensers before comparing its quality score.
-  */
-  higherPatterns.sort(
-    (a, b) => {
-      const countDifference =
-        a.count - b.count;
-
-      if (
-        countDifference !== 0
-      ) {
-        return countDifference;
-      }
-
-      return a.score - b.score;
-    }
-  );
-
-  exactPatterns.forEach(
-    pattern => {
+    if (
+      displayedRate ===
+      requestedDisplayedRate
+    ) {
       pattern.recommendationGroup =
         "exact";
 
       pattern.leftoverDispensers =
-        0;
+        Math.max(
+          0,
+          targetDispensers -
+          pattern.count
+        );
 
       pattern.additionalDispensers =
-        0;
-    }
-  );
+        Math.max(
+          0,
+          pattern.count -
+          targetDispensers
+        );
 
-  lowerPatterns.forEach(
-    pattern => {
+      return;
+    }
+
+    if (
+      displayedRate <
+      requestedDisplayedRate
+    ) {
       pattern.recommendationGroup =
         "lower";
 
       pattern.leftoverDispensers =
-        targetDispensers -
-        pattern.count;
+        Math.max(
+          0,
+          targetDispensers -
+          pattern.count
+        );
 
       pattern.additionalDispensers =
         0;
+
+      return;
     }
-  );
 
-  higherPatterns.forEach(
-    pattern => {
-      pattern.recommendationGroup =
-        "higher";
+    pattern.recommendationGroup =
+      "higher";
 
-      pattern.leftoverDispensers =
-        0;
+    pattern.leftoverDispensers =
+      0;
 
-      pattern.additionalDispensers =
+    pattern.additionalDispensers =
+      Math.max(
+        0,
         pattern.count -
-        targetDispensers;
-    }
-  );
-
-  const selectedPatterns = [];
-
-  function addPattern(
-    pattern
-  ) {
-    if (
-      pattern &&
-      !selectedPatterns.includes(
-        pattern
-      )
-    ) {
-      selectedPatterns.push(
-        pattern
+        targetDispensers
       );
-    }
   }
-
-  /*
-    Pattern 1:
-    Use the best exact-count pattern when one passes
-    every stagger, gap, cluster, banding and assigned-
-    area audit.
-
-    Otherwise use the closest acceptable lower-count
-    pattern.
-  */
-  if (
-    exactPatterns.length
-  ) {
-    addPattern(
-      exactPatterns[0]
-    );
-  } else if (
-    lowerPatterns.length
-  ) {
-    addPattern(
-      lowerPatterns[0]
-    );
-  } else {
-    addPattern(
-      higherPatterns[0]
-    );
-  }
-
-  /*
-    Pattern 2:
-    Give another option that does not require the
-    grower to purchase additional dispensers.
-  */
-  const secondExactOrLower =
-    [
-      ...exactPatterns,
-      ...lowerPatterns
-    ].find(
-      pattern =>
-        !selectedPatterns.includes(
-          pattern
-        )
-    );
-
-  addPattern(
-    secondExactOrLower
-  );
-
-  /*
-    Pattern 3:
-    Show the best higher-density alternative, when
-    one exists. It will later be clearly labeled as
-    requiring additional dispensers.
-  */
-  addPattern(
-    higherPatterns[0]
-  );
-
-  /*
-    If one of the three groups did not contain a
-    pattern, fill the remaining position with the
-    next-best unused acceptable candidate.
-  */
-  uniquePatterns.forEach(
-    pattern => {
-      if (
-        selectedPatterns.length >= 3
-      ) {
-        return;
-      }
-
-      addPattern(
-        pattern
-      );
-    }
-  );
+);
 
     return {
     orchard,
