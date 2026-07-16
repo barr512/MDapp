@@ -1185,13 +1185,23 @@ function auditWholeBlockBanding(
     one average or nearest-neighbor measurement.
   */
   function scanAxis(
-    coordinates,
-    axisLength
-  ) {
+  coordinates,
+  axisLength,
+  windowMultiplier = 1.1
+) {
+    /*
+      A wider scan window can be used along the orchard
+      rows so that intentional A/B staggering is measured
+      as one combined repeating pattern.
+
+      The narrower default remains appropriate across
+      the orchard rows.
+    */
     const windowSize =
       Math.min(
         axisLength,
-        expectedSpacing * 1.1
+        expectedSpacing *
+          windowMultiplier
       );
 
     const stepSize =
@@ -1390,10 +1400,20 @@ function auditWholeBlockBanding(
     acrossRowScan detects uneven concentration across
     the width of the orchard.
   */
-  const alongRowScan =
+  /*
+  Along-row dispenser positions from alternating A/B
+  rows naturally occur in offset groups.
+
+  Scan a section approximately 2.25 expected spacings
+  long so the audit evaluates the combined staggered
+  pattern rather than treating each offset group as a
+  separate dense or open band.
+*/
+const alongRowScan =
   scanAxis(
     treeCoordinates,
-    blockLength
+    blockLength,
+    2.25
   );
 
 /*
