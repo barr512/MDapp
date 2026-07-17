@@ -166,6 +166,16 @@ const SAVED_BLOCKS_STORAGE_KEY =
 const savedBlocksList =
   document.getElementById("savedBlocksList");
 
+const savedBlocksSection =
+  document.getElementById(
+    "savedBlocksSection"
+  );
+
+const viewSavedBlocksBtn =
+  document.getElementById(
+    "viewSavedBlocksBtn"
+  );
+
 const exportBlocksBtn =
   document.getElementById("exportBlocksBtn");
 
@@ -5790,6 +5800,10 @@ function selectPlan(plan, input) {
         <button id="printBlockPlanBtn" type="button" class="secondary-button">
           Print / Save as PDF
         </button>
+
+        <button id="viewSavedBlocksFromPlanBtn" type="button" class="secondary-button">
+          View Saved Blocks
+        </button>
       </div>
 
       <p id="planSaveStatus" class="hint"></p>
@@ -6025,6 +6039,24 @@ function ordinal(number) {
 }
 
 
+function showSavedBlocks() {
+  showSetupScreen();
+
+  requestAnimationFrame(() => {
+    savedBlocksSection?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  });
+}
+
+if (viewSavedBlocksBtn) {
+  viewSavedBlocksBtn.addEventListener(
+    "click",
+    showSavedBlocks
+  );
+}
+
 function getSavedBlocks() {
   try {
     const saved = JSON.parse(
@@ -6096,6 +6128,11 @@ function setupPlanActionButtons() {
       "printBlockPlanBtn"
     );
 
+  const viewSavedButton =
+    document.getElementById(
+      "viewSavedBlocksFromPlanBtn"
+    );
+
   if (saveButton) {
     saveButton.addEventListener(
       "click",
@@ -6107,6 +6144,13 @@ function setupPlanActionButtons() {
     printButton.addEventListener(
       "click",
       printCurrentPlan
+    );
+  }
+
+  if (viewSavedButton) {
+    viewSavedButton.addEventListener(
+      "click",
+      showSavedBlocks
     );
   }
 }
