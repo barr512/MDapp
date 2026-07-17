@@ -290,3 +290,145 @@ button:active {
 .south-label {
   text-align: center;
 }
+
+
+.saved-blocks-card {
+  margin-top: 20px;
+}
+
+.saved-blocks-heading,
+.saved-block-item,
+.saved-block-actions,
+.saved-blocks-tools,
+.plan-action-grid {
+  display: flex;
+  gap: 12px;
+}
+
+.saved-blocks-heading,
+.saved-block-item {
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.saved-blocks-list {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.saved-block-item {
+  padding: 16px;
+  border: 1px solid #d7e2d8;
+  border-radius: 14px;
+  background: #f8fbf8;
+}
+
+.saved-block-item h3 {
+  margin: 0 0 6px;
+}
+
+.saved-block-item p {
+  margin: 4px 0;
+}
+
+.saved-block-actions,
+.saved-blocks-tools,
+.plan-action-grid {
+  flex-wrap: wrap;
+}
+
+.saved-block-actions button,
+.saved-blocks-tools button,
+.button-label,
+.plan-action-grid button {
+  width: auto;
+  margin: 0;
+}
+
+.button-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border-radius: 10px;
+  background: #e8f1e9;
+  color: #1d4f24;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.danger-button {
+  color: #8a1f1f;
+}
+
+.plan-save-panel {
+  margin: 24px 0;
+  padding: 18px;
+  border: 1px solid #d7e2d8;
+  border-radius: 14px;
+  background: #f8fbf8;
+}
+
+.plan-save-panel h3 {
+  margin-top: 0;
+}
+
+@media (max-width: 680px) {
+  .saved-block-item {
+    display: grid;
+  }
+
+  .saved-block-actions button,
+  .saved-blocks-tools button,
+  .button-label,
+  .plan-action-grid button {
+    width: 100%;
+  }
+}
+
+@media print {
+  body::before {
+    content: "CT APP — " attr(data-print-block);
+    display: block;
+    margin: 0 0 18px;
+    font-size: 24px;
+    font-weight: 800;
+  }
+
+  .hero,
+  #setupScreen,
+  #summary,
+  #options,
+  #topBackBtn,
+  #backBtn,
+  .no-print,
+  #mapSection > h2 {
+    display: none !important;
+  }
+
+  #resultsScreen,
+  #mapSection,
+  #instructions {
+    display: block !important;
+  }
+
+  #mapSection,
+  #instructions {
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+    break-inside: avoid;
+  }
+
+  .app {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  button {
+    display: none !important;
+  }
+}
