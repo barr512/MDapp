@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2e7d32">
     <meta charset="UTF-8">
 
@@ -11,7 +12,7 @@
     <title>CT APP</title>
 
     <link rel="stylesheet"
-          href="style.css?v=saved-blocks-1">
+          href="style.css">
 
 </head>
 
@@ -270,8 +271,26 @@
 
 </main>
 
-<script src="coverageEngine.js?v=saved-blocks-1"></script>
-<script src="app.js?v=saved-blocks-2"></script>
+
+<div
+  id="planningOverlay"
+  class="planning-overlay"
+  role="status"
+  aria-live="polite"
+  aria-hidden="true"
+  hidden>
+  <div class="planning-dialog">
+    <div class="planning-spinner" aria-hidden="true"></div>
+    <h2 id="planningOverlayTitle">Building Deployment Patterns</h2>
+    <p id="planningOverlayMessage">
+      Checking rate, spacing, coverage, and practical field patterns…
+    </p>
+    <p class="hint">This may take a moment on larger blocks.</p>
+  </div>
+</div>
+
+<script src="coverageEngine.js"></script>
+<script src="app.js"></script>
 
 </body>
 
