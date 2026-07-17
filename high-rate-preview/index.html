@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta name="theme-color" content="#2e7d32">
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>CT APP</title>
+
+    <link rel="stylesheet"
+          href="style.css?v=direct-engine-1">
+
+</head>
+
+<body>
+
+<main class="app">
+
+    <section class="hero">
+
+        <div>
+
+            <p class="eyebrow">
+                MD Dispenser Placement Planning
+            </p>
+
+            <h1>CT APP</h1>
+
+            <p class="subtitle">
+               Patterns for solid dispenser disruption.
+
+        </div>
+
+    </section>
+
+    <section id="setupScreen">
+
+    <section class="card">
+
+        <h2>Block Details</h2>
+
+    
+
+        <div class="grid">
+                    <label>
+
+                Acres
+
+                <input
+                    id="acres"
+                    type="number"
+                    value=""
+                    min="0.1"
+                    step="0.1">
+
+            </label>
+
+            <label>
+
+                Rows
+
+                <input
+                    id="rows"
+                    type="number"
+                    value=""
+                    min="1">
+
+            </label>
+
+           <label>
+
+    Row Spacing, ft
+
+    <input
+        id="rowSpacing"
+        type="number"
+        value=""
+        min="1"
+        step="0.5">
+
+</label>
+
+<label>
+
+    Tree Spacing, ft
+
+    <input
+        id="treeSpacing"
+        type="number"
+        value=""
+        min="1"
+        step="0.5">
+
+</label>
+<label>
+    Target Pest(s)
+
+    <select id="targetPests">
+        <option value="">Show all products</option>
+        <option value="cm">Codling moth</option>
+        <option value="cm-ofm">Codling moth + Oriental fruit moth</option>
+        <option value="cm-oblr">Codling moth + Oblique banded leafroller</option>
+        <option value="ofm">Oriental fruit moth</option>
+        <option value="oblr">Oblique banded leafroller</option>
+    </select>
+</label>            
+ <label>
+    Product
+    <span class="hint">Optional — select a product to fill the label rate</span>
+
+    <select id="productSelect">
+    <option value="">Manual rate entry</option>
+    <option value="cmda-combo-meso-a">CIDETRAK CMDA COMBO MESO-A — 32-36/acre</option>
+    <option value="cmda-combo-pp">CIDETRAK CMDA COMBO PP — 200-400/acre</option>
+    <option value="cmda-ofm-meso">CIDETRAK CMDA + OFM MESO — 32-38/acre</option>
+    <option value="cm-ofm-combo-meso">CIDETRAK CM-OFM COMBO MESO — 32-36/acre</option>
+    <option value="cm-ofm-combo-pp">CIDETRAK CM-OFM COMBO PP — 200-440/acre</option>
+    <option value="cmda-lr-dual-meso">CIDETRAK CMDA + LR DUAL MESO — 32-36/acre</option>
+    <option value="ofm-l-meso">CIDETRAK OFM-L MESO — 32-35/acre</option>
+    <option value="ofm-l-pp">CIDETRAK OFM-L PP — 100-200/acre, default 170</option>
+    <option value="lr-meso">CIDETRAK LR MESO — 32-36/acre</option>
+    <option value="dbm-meso">CIDETRAK DBM MESO — 4-8 CPDs/acre</option>
+</select>
+<span id="productRateNote" class="hint"></span>                
+</label>
+            <label>
+
+                Dispensers Per Acre
+
+                <input
+                    id="rate"
+                    type="number"
+                    value="200"
+                    min="1">
+
+            </label>
+           
+
+<label>
+    Available dispensers
+    <span class="hint">Optional — leave blank to use the label rate</span>
+
+    <input
+        id="availableDispensers"
+        type="number"
+        min="1"
+        placeholder="Example: 180">
+</label>
+<label>
+    Row Direction
+
+    <select id="rowDirection">
+        <option value="north-south">Rows run North to South</option>
+        <option value="east-west">Rows run East to West</option>
+    </select>
+</label>
+          <label>
+    Highest Pressure Edge
+
+    <select id="pressureEdge">
+        <option value="none">No pressure shift</option>
+        <option value="north">North edge</option>
+        <option value="south">South edge</option>
+        <option value="west">West edge</option>
+        <option value="east">East edge</option>
+    </select>
+</label>
+
+        </div>
+
+        <button id="generateBtn">
+            Generate Plans
+        </button>
+<button
+  id="idealDemoBtn"
+  type="button"
+  class="secondary-button"
+>
+  Preview Ideal Mathematical Layout
+</button>
+        </section>
+
+</section>
+
+<section id="resultsScreen" class="hidden">
+
+    <button id="topBackBtn" class="secondary-button">
+        Back to Block Details
+    </button>
+
+    <br><br>
+
+    <section
+        id="summary"
+        class="card hidden">
+    </section>
+
+    <section
+        id="options"
+        class="options">
+    </section>
+
+    <section
+        id="mapSection"
+        class="card hidden">
+
+        <h2>
+            Visual Schematic
+        </h2>
+
+        <p
+            id="selectedPlanText"
+            class="muted">
+        </p>
+
+        <div
+            id="map"
+            class="map">
+        </div>
+
+    </section>
+
+        <section
+        id="instructions"
+        class="card hidden">
+    </section>
+
+    <button id="backBtn" class="secondary-button">
+        Back to Block Details
+    </button>
+
+</section>
+
+</main>
+
+<script src="coverageEngine.js?v=direct-engine-1"></script>
+<script src="app.js?v=direct-engine-1"></script>
+
+</body>
+
+</html>
