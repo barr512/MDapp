@@ -3482,7 +3482,14 @@ function getBestPatterns(
               : 0
           );
 
-        const phase =
+        /*
+          Test several starting phases and choose the
+          one that maximizes physical separation from
+          the preceding treated row. This prevents
+          mixed-gap rows with slightly different counts
+          from drifting into crowded near-alignments.
+        */
+        const preferredPhase =
           (
             rowIndex +
             phaseShift
@@ -3492,12 +3499,139 @@ function getBestPatterns(
             ? 0.25
             : 0.75;
 
-        const positions =
-          buildEvenPositions(
-            count,
-            phase,
-            reverseTrees
-          );
+        const phaseCandidates =
+          rowIndex === 0
+            ? [preferredPhase]
+            : Array.from(
+                { length: 24 },
+                (_, index) =>
+                  (
+                    index + 0.5
+                  ) / 24
+              );
+
+        let positions = [];
+        let bestPhaseScore =
+          -Infinity;
+
+        phaseCandidates.forEach(
+          phase => {
+            const candidatePositions =
+              buildEvenPositions(
+                count,
+                phase,
+                reverseTrees
+              );
+
+            if (
+              candidatePositions.length !==
+              count
+            ) {
+              return;
+            }
+
+            if (rowIndex === 0) {
+              positions =
+                candidatePositions;
+              bestPhaseScore = 0;
+              return;
+            }
+
+            const previousPositions =
+              rowPatterns[
+                rowPatterns.length - 1
+              ];
+
+            const previousRow =
+              treatedRows[
+                rowIndex - 1
+              ];
+
+            const acrossDistance =
+              Math.abs(
+                row - previousRow
+              ) *
+              input.rowSpacing;
+
+            let minimumDistance =
+              Infinity;
+
+            let crowdedPairCount = 0;
+
+            const expectedDistance =
+              Math.sqrt(
+                SQFT_PER_ACRE /
+                (
+                  desiredCount /
+                  input.acres
+                )
+              );
+
+            candidatePositions.forEach(
+              tree => {
+                previousPositions.forEach(
+                  previousTree => {
+                    const alongDistance =
+                      Math.abs(
+                        tree -
+                        previousTree
+                      ) *
+                      input.treeSpacing;
+
+                    const distance =
+                      Math.sqrt(
+                        acrossDistance ** 2 +
+                        alongDistance ** 2
+                      );
+
+                    minimumDistance =
+                      Math.min(
+                        minimumDistance,
+                        distance
+                      );
+
+                    if (
+                      distance <
+                      expectedDistance *
+                        0.82
+                    ) {
+                      crowdedPairCount++;
+                    }
+                  }
+                );
+              }
+            );
+
+            const phasePreference =
+              Math.min(
+                Math.abs(
+                  phase -
+                  preferredPhase
+                ),
+                1 -
+                  Math.abs(
+                    phase -
+                    preferredPhase
+                  )
+              );
+
+            const phaseScore =
+              minimumDistance * 100 -
+              crowdedPairCount * 25 -
+              phasePreference;
+
+            if (
+              phaseScore >
+              bestPhaseScore
+            ) {
+              bestPhaseScore =
+                phaseScore;
+
+              positions =
+                candidatePositions;
+            }
+          }
+        );
 
         if (
           positions.length !==
@@ -3661,6 +3795,17 @@ function getBestPatterns(
             12
           )
         ),
+      minimumWithinRowGapFeet:
+        Math.max(
+          1,
+          Math.floor(
+            treesPerRow /
+            Math.max(
+              ...rowCounts
+            )
+          )
+        ) *
+        input.treeSpacing,
       geometryScore,
       expectedSpacing,
       evaluationInput
@@ -3799,10 +3944,15 @@ function getBestPatterns(
       coverage
         .closestDispenserDistance >=
         Math.min(
-          input.rowSpacing,
-          input.treeSpacing
-        ) *
-          0.95 &&
+          candidate.expectedSpacing *
+            0.78,
+          candidate
+            .minimumWithinRowGapFeet *
+            0.98,
+          candidate.rowInterval *
+            input.rowSpacing *
+            0.95
+        ) &&
       coverage
         .worstNearestDistance <=
         candidate.expectedSpacing *
@@ -3841,13 +3991,18 @@ function getBestPatterns(
   ) {
     const preliminary = [];
 
+    const maximumRowInterval =
+      rateClass >= 80
+        ? 1
+        : Math.min(
+            10,
+            input.rows
+          );
+
     for (
       let rowInterval = 1;
       rowInterval <=
-        Math.min(
-          10,
-          input.rows
-        );
+        maximumRowInterval;
       rowInterval++
     ) {
       for (
